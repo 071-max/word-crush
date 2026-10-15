@@ -1,0 +1,1763 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#080716">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>单词消消乐</title>
+<style>
+:root{
+  --bg:#080716;
+  --ink:#f3f1ff;
+  --ink2:#a49ecb;
+  --ink3:#6a6494;
+
+  --en-a:#4f7cff;
+  --en-b:#7b5cff;
+  --zh-a:#ff5f8f;
+  --zh-b:#ff9a5c;
+
+  --gold:#ffc53d;
+  --mint:#25e0ae;
+  --red:#ff5470;
+
+  --line:rgba(255,255,255,.13);
+  --line2:rgba(255,255,255,.26);
+  --glass:rgba(255,255,255,.06);
+  --glass2:rgba(255,255,255,.11);
+
+  --st:env(safe-area-inset-top,0px);
+  --sb:env(safe-area-inset-bottom,0px);
+
+  --font:"Segoe UI",-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;
+}
+
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden}
+body{
+  font-family:var(--font);color:var(--ink);background:var(--bg);
+  overscroll-behavior:none;touch-action:manipulation;
+  user-select:none;-webkit-user-select:none;-webkit-font-smoothing:antialiased;
+}
+button{font-family:inherit;color:inherit;border:none;background:none;cursor:pointer}
+
+/* ============ 背景 ============ */
+#bg{position:fixed;inset:0;z-index:0;overflow:hidden;
+  background:
+    radial-gradient(110% 60% at 50% -10%, #201a52 0%, transparent 60%),
+    radial-gradient(90% 50% at 50% 110%, #0d2a3f 0%, transparent 60%),
+    linear-gradient(180deg,#0d0b26 0%,#080716 65%,#050410 100%);
+}
+#bg::after{
+  content:"";position:absolute;inset:0;opacity:.7;
+  background-image:
+    radial-gradient(1.4px 1.4px at 14% 16%, rgba(255,255,255,.7), transparent),
+    radial-gradient(1.1px 1.1px at 76% 10%, rgba(255,255,255,.5), transparent),
+    radial-gradient(1.5px 1.5px at 36% 46%, rgba(180,160,255,.55), transparent),
+    radial-gradient(1.1px 1.1px at 65% 30%, rgba(255,255,255,.4), transparent),
+    radial-gradient(1.4px 1.4px at 86% 62%, rgba(150,220,255,.45), transparent),
+    radial-gradient(1.2px 1.2px at 20% 74%, rgba(255,255,255,.35), transparent),
+    radial-gradient(1.3px 1.3px at 54% 88%, rgba(255,180,220,.4), transparent);
+  animation:sdrift 80s linear infinite;
+}
+@keyframes sdrift{to{transform:translateY(-100px)}}
+.blob{position:absolute;border-radius:50%;filter:blur(72px);opacity:.26;pointer-events:none;
+  animation:bfloat linear infinite}
+@keyframes bfloat{
+  0%,100%{transform:translate(0,0) scale(1)}
+  50%{transform:translate(26px,-34px) scale(1.2)}
+}
+
+/* ============ 屏幕 ============ */
+.screen{
+  position:fixed;inset:0;z-index:2;
+  display:flex;flex-direction:column;
+  padding:calc(var(--st) + 10px) 14px calc(var(--sb) + 10px);
+  opacity:0;visibility:hidden;transition:opacity .28s,visibility .28s;
+}
+.screen.on{opacity:1;visibility:visible}
+.wrap{width:100%;max-width:520px;margin:0 auto;flex:1;display:flex;
+  flex-direction:column;min-height:0}
+
+/* ============ 首页 ============ */
+#home .wrap{justify-content:center;align-items:center;text-align:center}
+.mascot{font-size:60px;line-height:1;margin-bottom:14px;
+  filter:drop-shadow(0 0 26px rgba(123,92,255,.7));
+  animation:mfloat 4.6s ease-in-out infinite}
+@keyframes mfloat{
+  0%,100%{transform:translateY(0) rotate(-4deg)}
+  50%{transform:translateY(-13px) rotate(4deg)}
+}
+h1.logo{
+  font-size:clamp(36px,11.5vw,52px);font-weight:900;letter-spacing:5px;line-height:1.05;
+  background:linear-gradient(115deg,#b9d0ff 0%,#7b5cff 30%,#25e0ae 62%,#ffc53d 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  background-size:220% 220%;animation:sheen 7s ease infinite;
+}
+@keyframes sheen{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+.logo-sub{font-size:11.5px;letter-spacing:.45em;color:var(--ink3);
+  text-transform:uppercase;margin-top:11px;font-weight:700}
+
+.gift{margin-top:26px;font-size:14.5px;color:var(--ink2);letter-spacing:1px}
+.gift .nm{font-size:26px;font-weight:900;display:inline-block;margin:0 4px;
+  background:linear-gradient(100deg,#ff9ec4,#ffd6e8 42%,#ffc53d);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  text-shadow:0 0 30px rgba(255,150,200,.35)}
+.gift .tag{display:block;font-size:12px;color:var(--ink3);margin-top:8px;letter-spacing:.5px}
+
+.big-btn{
+  width:100%;max-width:340px;margin-top:30px;padding:19px 24px;
+  border-radius:19px;font-size:18px;font-weight:900;letter-spacing:4px;
+  background:linear-gradient(120deg,#7b5cff,#25e0ae);color:#07051a;
+  box-shadow:0 10px 34px rgba(123,92,255,.45),inset 0 1px 0 rgba(255,255,255,.35);
+  transition:transform .16s cubic-bezier(.34,1.6,.64,1);position:relative;overflow:hidden;
+}
+.big-btn::after{content:"";position:absolute;top:0;left:-60%;width:40%;height:100%;
+  background:linear-gradient(100deg,transparent,rgba(255,255,255,.55),transparent);
+  animation:sweep 3.6s ease-in-out infinite}
+@keyframes sweep{0%{left:-60%}55%,100%{left:135%}}
+.big-btn:active{transform:scale(.965)}
+
+.sub-btn{
+  width:100%;max-width:340px;margin-top:11px;padding:15px 22px;
+  border-radius:19px;font-size:15px;font-weight:700;letter-spacing:1px;
+  background:var(--glass);border:1px solid var(--line);color:var(--ink2);
+  transition:.18s;
+}
+.sub-btn:active{transform:scale(.97);background:var(--glass2)}
+.sub-btn .k{display:block;font-size:11px;color:var(--ink3);margin-top:4px;
+  letter-spacing:0;font-weight:400}
+
+.foot{margin-top:30px;font-size:11.5px;color:var(--ink3);letter-spacing:.4px;line-height:1.9}
+
+/* ============ 地图 ============ */
+.bar{display:flex;align-items:center;gap:12px;padding:2px 0 12px;flex:0 0 auto}
+.bar .back{width:40px;height:40px;flex:0 0 auto;border-radius:13px;
+  background:var(--glass);border:1px solid var(--line);display:grid;place-items:center;
+  font-size:17px;transition:.16s}
+.bar .back:active{transform:scale(.9);background:var(--glass2)}
+.bar h2{font-size:19px;font-weight:800;letter-spacing:1px;flex:1}
+.bar .tot{font-size:12px;font-weight:800;color:var(--gold);white-space:nowrap;
+  background:rgba(255,197,61,.12);border:1px solid rgba(255,197,61,.3);
+  padding:6px 11px;border-radius:999px}
+
+.scroller{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;
+  padding:4px 2px 18px;-webkit-overflow-scrolling:touch}
+.scroller::-webkit-scrollbar{width:0}
+
+.node{width:100%;display:flex;align-items:center;gap:13px;padding:14px 15px;
+  border-radius:19px;background:var(--glass);border:1px solid var(--line);
+  margin-bottom:10px;text-align:left;position:relative;overflow:hidden;
+  transition:transform .16s,background .18s,border-color .18s}
+.node:active{transform:scale(.975)}
+.node.done{background:rgba(37,224,174,.09);border-color:rgba(37,224,174,.3)}
+.node.next{background:linear-gradient(100deg,rgba(123,92,255,.26),rgba(37,224,174,.12));
+  border-color:rgba(123,92,255,.6);animation:npulse 2.6s ease-in-out infinite}
+@keyframes npulse{
+  0%,100%{box-shadow:0 0 0 1px rgba(123,92,255,.25),0 8px 28px rgba(123,92,255,.16)}
+  50%{box-shadow:0 0 0 1px rgba(123,92,255,.55),0 8px 40px rgba(123,92,255,.42)}
+}
+.node.lock{opacity:.4}
+.node.boss{background:linear-gradient(100deg,rgba(255,84,112,.22),rgba(255,95,143,.1));
+  border-color:rgba(255,84,112,.45)}
+.node.boss.next{animation:bpulse 2s ease-in-out infinite}
+@keyframes bpulse{
+  0%,100%{box-shadow:0 0 0 1px rgba(255,84,112,.3),0 8px 30px rgba(255,84,112,.2)}
+  50%{box-shadow:0 0 0 1px rgba(255,84,112,.75),0 8px 46px rgba(255,84,112,.55)}
+}
+.node .idx{width:46px;height:46px;flex:0 0 auto;border-radius:14px;
+  display:grid;place-items:center;font-size:19px;font-weight:900;
+  background:rgba(255,255,255,.07);border:1px solid var(--line)}
+.node.done .idx{background:rgba(37,224,174,.2);border-color:rgba(37,224,174,.4)}
+.node.boss .idx{background:rgba(255,84,112,.2);border-color:rgba(255,84,112,.42)}
+.node .bd{flex:1;min-width:0}
+.node .nm{display:block;font-size:16px;font-weight:800;letter-spacing:.5px;margin-bottom:4px}
+.node .mt{display:block;font-size:11.5px;color:var(--ink3)}
+.node .mt .d{margin:0 6px;opacity:.5}
+.stars{display:flex;gap:3px;font-size:14px;flex:0 0 auto}
+.stars i{font-style:normal;opacity:.16}
+.stars i.on{opacity:1;filter:drop-shadow(0 0 6px rgba(255,197,61,.75))}
+.node .best{position:absolute;right:15px;bottom:10px;font-size:10.5px;
+  color:var(--gold);opacity:.8}
+
+/* ============ 游戏 ============ */
+.hud{display:flex;align-items:center;gap:9px;flex:0 0 auto;padding-bottom:9px}
+.hud .pill{font-size:12px;font-weight:800;color:var(--ink2);
+  background:var(--glass);border:1px solid var(--line);
+  padding:7px 12px;border-radius:999px;white-space:nowrap}
+.hud .pill b{color:#b9a3ff}
+.hud .sc{margin-left:auto;font-size:17px;font-weight:900;color:var(--gold);
+  font-variant-numeric:tabular-nums;transition:transform .18s}
+.hud .sc.pop{transform:scale(1.3)}
+
+/* 时间条 */
+.tbar{flex:0 0 auto;height:12px;border-radius:999px;background:rgba(255,255,255,.07);
+  overflow:hidden;position:relative;margin-bottom:4px;
+  border:1px solid rgba(255,255,255,.08)}
+.tbar i{display:block;height:100%;width:100%;border-radius:999px;
+  background:linear-gradient(90deg,#25e0ae,#5fd0ff);transition:background .4s}
+.tbar.warn i{background:linear-gradient(90deg,#ffc53d,#ff9a5c)}
+.tbar.danger i{background:linear-gradient(90deg,#ff5470,#ff5f8f);
+  animation:tblink .55s ease-in-out infinite}
+@keyframes tblink{0%,100%{opacity:1}50%{opacity:.45}}
+.tbar .txt{position:absolute;inset:0;display:grid;place-items:center;
+  font-size:9px;font-weight:900;letter-spacing:.1em;color:#07051a;
+  text-shadow:0 1px 0 rgba(255,255,255,.35)}
+
+/* 目标 / BOSS */
+.goal{flex:0 0 auto;display:flex;align-items:center;gap:9px;
+  padding:9px 12px;margin:7px 0;border-radius:14px;
+  background:var(--glass);border:1px solid var(--line);font-size:12px;color:var(--ink2)}
+.goal .gl{font-weight:800;white-space:nowrap}
+.goal .gp{flex:1;height:7px;border-radius:999px;background:rgba(255,255,255,.09);overflow:hidden}
+.goal .gp i{display:block;height:100%;border-radius:999px;
+  background:linear-gradient(90deg,#7b5cff,#25e0ae);transition:width .4s cubic-bezier(.3,1,.4,1)}
+.goal.boss{background:rgba(255,84,112,.1);border-color:rgba(255,84,112,.3)}
+.goal.boss .gp i{background:linear-gradient(90deg,#ff5470,#ff5f8f,#ffc53d)}
+.goal .bf{font-size:19px;line-height:1;animation:bbreathe 2.4s ease-in-out infinite}
+@keyframes bbreathe{0%,100%{transform:scale(1)}50%{transform:scale(1.14)}}
+.goal .bf.hurt{animation:bhurt .4s ease}
+@keyframes bhurt{
+  0%,100%{transform:scale(1)}
+  25%{transform:scale(1.5) rotate(-12deg);filter:brightness(3)}
+  60%{transform:scale(.86) rotate(8deg)}
+}
+
+/* 棋盘 */
+#boardWrap{flex:1;min-height:0;position:relative;margin:4px 0;display:flex;
+  align-items:center;justify-content:center}
+#board{
+  position:relative;width:100%;height:100%;
+  border-radius:20px;
+  background:rgba(255,255,255,.028);
+  border:1px solid rgba(255,255,255,.07);
+  overflow:hidden;
+}
+
+.tile{
+  position:absolute;left:0;top:0;
+  padding:3px;
+  transition:transform .26s cubic-bezier(.3,1.25,.5,1), opacity .22s;
+  will-change:transform;
+  z-index:1;
+}
+.tile .face{
+  width:100%;height:100%;border-radius:13px;
+  display:flex;align-items:center;justify-content:center;
+  text-align:center;padding:5px;line-height:1.14;
+  font-weight:800;letter-spacing:.2px;word-break:break-word;
+  border:1.5px solid transparent;
+  box-shadow:0 3px 10px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.16);
+  transition:transform .16s,box-shadow .2s,border-color .2s,filter .2s;
+}
+.tile.en .face{
+  background:linear-gradient(165deg,var(--en-a),var(--en-b));
+  color:#fff;
+  font-family:ui-monospace,"Cascadia Mono",Consolas,monospace;
+  border-color:rgba(255,255,255,.24);
+}
+.tile.zh .face{
+  background:linear-gradient(165deg,var(--zh-a),var(--zh-b));
+  color:#fff;border-color:rgba(255,255,255,.24);
+}
+
+.tile.sel{z-index:6}
+.tile.sel .face{
+  transform:scale(1.09);
+  border-color:#fff;
+  box-shadow:0 0 0 3px rgba(255,255,255,.35),0 0 28px rgba(255,255,255,.6);
+  filter:brightness(1.22);
+}
+
+.tile.hintpair .face{animation:hpair 1.05s ease-in-out infinite}
+@keyframes hpair{
+  0%,100%{box-shadow:0 0 0 0 rgba(255,255,255,0),0 3px 10px rgba(0,0,0,.3)}
+  50%{box-shadow:0 0 0 3px rgba(255,255,255,.55),0 0 26px rgba(255,255,255,.7)}
+}
+
+.tile.bad .face{
+  animation:tbad .42s ease;
+  border-color:#ff5470!important;
+  box-shadow:0 0 22px rgba(255,84,112,.85);
+}
+@keyframes tbad{
+  0%,100%{transform:translateX(0)}
+  22%{transform:translateX(-6px) rotate(-3deg)}
+  58%{transform:translateX(6px) rotate(3deg)}
+  82%{transform:translateX(-3px)}
+}
+.tile.pop{pointer-events:none;z-index:5}
+.tile.pop .face{animation:tpop .34s cubic-bezier(.3,1.3,.5,1) forwards}
+@keyframes tpop{
+  0%{transform:scale(1);filter:brightness(1)}
+  40%{transform:scale(1.24);filter:brightness(2.6)}
+  100%{transform:scale(.15) rotate(28deg);opacity:0;filter:brightness(3)}
+}
+.tile.spawn{animation:tspawn .38s cubic-bezier(.34,1.5,.6,1)}
+@keyframes tspawn{
+  0%{opacity:0;transform:translateY(-38px) scale(.7)}
+  100%{opacity:1}
+}
+
+/* 角标 */
+.tile .flag{
+  position:absolute;top:-3px;right:1px;font-size:15px;line-height:1;
+  filter:drop-shadow(0 2px 5px rgba(0,0,0,.6));
+  animation:flagbob 1.5s ease-in-out infinite;
+}
+@keyframes flagbob{0%,100%{transform:translateY(0) rotate(-6deg)}50%{transform:translateY(-3px) rotate(6deg)}}
+.tile .flag.time{filter:drop-shadow(0 0 7px rgba(37,224,174,.95)) drop-shadow(0 2px 4px rgba(0,0,0,.6))}
+.tile .flag.bolt{filter:drop-shadow(0 0 7px rgba(255,197,61,.95)) drop-shadow(0 2px 4px rgba(0,0,0,.6))}
+.tile .flag.bomb{filter:drop-shadow(0 0 7px rgba(255,84,112,.95)) drop-shadow(0 2px 4px rgba(0,0,0,.6))}
+
+/* 连击 */
+.combo{
+  position:fixed;left:50%;top:31%;z-index:60;pointer-events:none;
+  transform:translate(-50%,-50%) scale(.4);opacity:0;
+  font-size:50px;font-weight:900;letter-spacing:-2px;white-space:nowrap;
+  background:linear-gradient(180deg,#fff,var(--gold));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 4px 22px rgba(255,197,61,.9));
+}
+.combo.go{animation:cpop .78s cubic-bezier(.2,1.4,.4,1) forwards}
+@keyframes cpop{
+  0%{opacity:0;transform:translate(-50%,-50%) scale(.3) rotate(-10deg)}
+  34%{opacity:1;transform:translate(-50%,-50%) scale(1.25) rotate(3deg)}
+  62%{transform:translate(-50%,-50%) scale(1) rotate(0)}
+  100%{opacity:0;transform:translate(-50%,-66%) scale(.9)}
+}
+
+.fly{position:fixed;z-index:58;pointer-events:none;font-size:20px;font-weight:900;
+  color:#7dffd4;text-shadow:0 2px 15px rgba(37,224,174,.9);white-space:nowrap}
+.fly.minus{color:#ff9db0;text-shadow:0 2px 15px rgba(255,84,112,.9)}
+
+#vig{position:fixed;inset:0;z-index:56;pointer-events:none;opacity:0;
+  background:radial-gradient(110% 78% at 50% 50%,transparent 40%,rgba(255,84,112,.52) 100%);
+  transition:opacity .16s}
+#vig.on{opacity:1}
+
+.conf{position:fixed;width:11px;height:11px;z-index:57;pointer-events:none;border-radius:2px}
+
+/* 教学条 */
+#teach{
+  position:fixed;left:50%;bottom:calc(var(--sb) + 16px);z-index:70;
+  transform:translate(-50%,18px);pointer-events:none;
+  background:rgba(16,13,44,.96);border:1px solid var(--line2);
+  border-radius:999px;padding:11px 22px;font-size:14px;
+  opacity:0;transition:opacity .26s,transform .26s;
+  max-width:90vw;text-align:center;box-shadow:0 10px 34px rgba(0,0,0,.6)}
+#teach.on{opacity:1;transform:translate(-50%,0)}
+#teach b{color:#7dffd4}
+#teach em{color:#ff9db0;font-style:normal;font-weight:800}
+
+/* 弹层 */
+.modal{position:fixed;inset:0;z-index:100;display:flex;align-items:center;
+  justify-content:center;padding:18px;background:rgba(5,4,16,.87);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  opacity:0;visibility:hidden;transition:opacity .28s,visibility .28s}
+.modal.on{opacity:1;visibility:visible}
+.card{width:100%;max-width:400px;max-height:88vh;overflow-y:auto;
+  background:linear-gradient(175deg,rgba(255,255,255,.13),rgba(255,255,255,.045));
+  border:1px solid var(--line2);border-radius:26px;padding:28px 22px 22px;
+  text-align:center;box-shadow:0 26px 70px rgba(0,0,0,.65);
+  transform:translateY(20px) scale(.95);
+  transition:transform .4s cubic-bezier(.34,1.5,.64,1)}
+.modal.on .card{transform:translateY(0) scale(1)}
+.card::-webkit-scrollbar{width:0}
+.card .em{font-size:54px;line-height:1;margin-bottom:12px;display:block}
+.card h3{font-size:24px;font-weight:900;letter-spacing:1.5px;margin-bottom:8px}
+.card .desc{font-size:14px;color:var(--ink2);line-height:1.75;margin-bottom:18px}
+.card .desc b{color:#7dffd4}
+.card .desc em{color:#ff9db0;font-style:normal;font-weight:800}
+
+.rstars{display:flex;justify-content:center;gap:12px;margin:4px 0 18px}
+.rstars i{font-style:normal;font-size:42px;opacity:.18;transform:scale(.4)}
+.rstars i.on{opacity:1;animation:spop .58s cubic-bezier(.34,1.7,.5,1) forwards;
+  filter:drop-shadow(0 0 13px rgba(255,197,61,.9))}
+@keyframes spop{
+  0%{transform:scale(.3) rotate(-40deg);opacity:0}
+  60%{transform:scale(1.35) rotate(11deg);opacity:1}
+  100%{transform:scale(1) rotate(0);opacity:1}
+}
+
+.srow{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:18px}
+.srow .c{background:rgba(255,255,255,.05);border:1px solid var(--line);
+  border-radius:13px;padding:12px 5px}
+.srow .c .v{font-size:20px;font-weight:900;color:#7dffd4;font-variant-numeric:tabular-nums}
+.srow .c .l{font-size:10.5px;color:var(--ink3);margin-top:4px}
+
+.cbtn{width:100%;padding:15px;border-radius:17px;font-size:16px;font-weight:900;
+  letter-spacing:2px;background:linear-gradient(120deg,#7b5cff,#25e0ae);
+  color:#07051a;margin-bottom:9px;box-shadow:0 8px 26px rgba(123,92,255,.4);
+  transition:transform .16s}
+.cbtn:active{transform:scale(.97)}
+.cbtn.ghost{background:var(--glass);border:1px solid var(--line);color:var(--ink2);
+  box-shadow:none;font-weight:700}
+.cbtn.ghost:active{background:var(--glass2)}
+
+/* 单词回顾 */
+.rev{display:flex;flex-direction:column;gap:6px;margin-bottom:16px;
+  max-height:150px;overflow-y:auto;text-align:left}
+.rev::-webkit-scrollbar{width:0}
+.rev .rw{display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.045);
+  border:1px solid var(--line);border-radius:11px;padding:8px 11px;font-size:13px}
+.rev .rw .e{font-weight:800;min-width:92px;color:#9db4ff;
+  font-family:ui-monospace,Consolas,monospace}
+.rev .rw .z{color:var(--ink2);flex:1}
+.rev .rw .s{width:27px;height:27px;border-radius:9px;flex:0 0 auto;
+  background:rgba(255,255,255,.08);border:1px solid var(--line);
+  display:grid;place-items:center;font-size:12px}
+.rev .rw .s:active{background:rgba(123,92,255,.35)}
+
+.final-name{font-size:29px;font-weight:900;letter-spacing:1px;margin:2px 0 10px;
+  background:linear-gradient(100deg,#ff9ec4,#ffd6e8 45%,#ffc53d);
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.note{font-size:11.5px;color:var(--ink3);margin-top:12px;line-height:1.8}
+
+.howto{text-align:left;font-size:13.5px;line-height:2;color:var(--ink2)}
+.howto b{color:#9db4ff}
+.howto em{color:#ff9db0;font-style:normal;font-weight:800}
+.howto .row{display:flex;gap:9px;align-items:flex-start;margin-bottom:9px}
+.howto .row .ic{font-size:19px;flex:0 0 auto;width:26px;text-align:center}
+
+@media (max-height:680px){
+  .mascot{font-size:48px;margin-bottom:10px}
+  .gift{margin-top:18px}
+  .big-btn{margin-top:20px;padding:16px}
+  .foot{margin-top:18px}
+  .card .em{font-size:44px}
+  .combo{font-size:42px}
+}
+@media (min-width:600px){
+  .sub-btn:hover{background:var(--glass2);color:var(--ink)}
+  .node:hover{background:var(--glass2)}
+  .cbtn.ghost:hover{background:var(--glass2)}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;
+    transition-duration:.06s!important}
+  .big-btn::after{display:none}
+}
+</style>
+</head>
+<body>
+
+<div id="bg"></div>
+<div id="vig"></div>
+
+<!-- ================= 首页 ================= -->
+<div class="screen on" id="home">
+  <div class="wrap">
+    <div class="mascot">🧩</div>
+    <h1 class="logo">单词消消乐</h1>
+    <div class="logo-sub">Word Crush · CET-4</div>
+
+    <div class="gift">
+      送给<span class="nm" id="homeName">你</span>
+      <span class="tag" id="homeTag">把四级单词点成一对一对的方块</span>
+    </div>
+
+    <button class="big-btn" id="btnPlay">开 始 消 除</button>
+    <button class="sub-btn" id="btnMap">关卡地图<span class="k" id="mapSummary">尚未启程</span></button>
+    <button class="sub-btn" id="btnHow">怎么玩 ?</button>
+
+    <div class="foot">
+      进度自动保存在本机 · 随时可以关掉离开
+    </div>
+  </div>
+</div>
+
+<!-- ================= 地图 ================= -->
+<div class="screen" id="map">
+  <div class="wrap">
+    <div class="bar">
+      <button class="back" id="mapBack">←</button>
+      <h2>关卡地图</h2>
+      <div class="tot" id="mapScore">⭐ 0 / 36</div>
+    </div>
+    <div class="scroller"><div id="road"></div></div>
+  </div>
+</div>
+
+<!-- ================= 游戏 ================= -->
+<div class="screen" id="play">
+  <div class="wrap">
+
+    <div class="hud">
+      <div class="pill" id="hudLv">第 <b>1</b> 关</div>
+      <div class="pill" id="hudCombo">连击 <b>0</b></div>
+      <div class="sc" id="hudSc">0</div>
+    </div>
+
+    <div class="tbar" id="tbar">
+      <i id="tfill"></i>
+      <div class="txt" id="ttxt">60s</div>
+    </div>
+
+    <div class="goal" id="goal">
+      <span class="gl" id="goalLbl">目标</span>
+      <span class="gp"><i id="goalBar"></i></span>
+      <span class="gl" id="goalNum">0/12</span>
+    </div>
+
+    <div id="boardWrap"><div id="board"></div></div>
+
+    <div class="hud" style="padding-top:8px;padding-bottom:0">
+      <div class="pill" id="hudPairs">已消除 <b>0</b> 对</div>
+      <div class="pill" style="margin-left:auto" id="hudErr">失误 <b>0</b></div>
+    </div>
+
+  </div>
+</div>
+
+<div class="combo" id="comboEl"></div>
+<div id="teach"></div>
+
+<!-- ================= 过关 ================= -->
+<div class="modal" id="mWin">
+  <div class="card">
+    <span class="em" id="winEm">🎉</span>
+    <h3 id="winTitle">过关！</h3>
+    <div class="desc" id="winDesc"></div>
+    <div class="rstars" id="winStars"><i>★</i><i>★</i><i>★</i></div>
+    <div class="srow">
+      <div class="c"><div class="v" id="wSc">0</div><div class="l">得分</div></div>
+      <div class="c"><div class="v" id="wPairs">0</div><div class="l">消除对数</div></div>
+      <div class="c"><div class="v" id="wCombo">0</div><div class="l">最高连击</div></div>
+    </div>
+    <div class="rev" id="wRev"></div>
+    <button class="cbtn" id="winNext">下一关 →</button>
+    <button class="cbtn ghost" id="winRetry">再玩一次</button>
+    <button class="cbtn ghost" id="winMap">回到地图</button>
+  </div>
+</div>
+
+<!-- ================= 失败 ================= -->
+<div class="modal" id="mLose">
+  <div class="card">
+    <span class="em">⏳</span>
+    <h3 id="loseTitle">时间到</h3>
+    <div class="desc" id="loseDesc"></div>
+    <div class="rev" id="lRev"></div>
+    <button class="cbtn" id="loseRetry">再来一次</button>
+    <button class="cbtn ghost" id="loseMap">回到地图</button>
+  </div>
+</div>
+
+<!-- ================= 全通关 ================= -->
+<div class="modal" id="mFinal">
+  <div class="card">
+    <span class="em">🏆</span>
+    <h3>全部通关！</h3>
+    <div class="final-name" id="finalName">你</div>
+    <div class="desc" id="finalDesc"></div>
+    <div class="srow">
+      <div class="c"><div class="v" id="fStars">0</div><div class="l">总星数</div></div>
+      <div class="c"><div class="v" id="fScore">0</div><div class="l">累计得分</div></div>
+      <div class="c"><div class="v" id="fWords">0</div><div class="l">见过的词</div></div>
+    </div>
+    <button class="cbtn" id="finalMap">回到地图</button>
+  </div>
+</div>
+
+<!-- ================= 玩法 ================= -->
+<div class="modal" id="mHow">
+  <div class="card">
+    <span class="em">📖</span>
+    <h3>怎么玩</h3>
+    <div class="howto">
+      <div class="row"><span class="ic">👆</span><span>
+        点一个<b>蓝色英文块</b>，再点它对应的<b>粉色中文块</b>，配对就消掉</span></div>
+      <div class="row"><span class="ic">🔊</span><span>
+        点到英文块会自动<b>朗读</b>它，边玩边磨耳朵</span></div>
+      <div class="row"><span class="ic">⏱️</span><span>
+        消对了<b>加时间</b>，配错了<em>扣时间</em>，时间见底就结束</span></div>
+      <div class="row"><span class="ic">🔥</span><span>
+        不失误地连着消，<b>连击倍率</b>越来越高</span></div>
+      <div class="row"><span class="ic">💣</span><span>
+        带角标的方块是<b>特殊块</b>：💣炸一片 · ⏰加 8 秒 · ⚡再白送一对</span></div>
+      <div class="row"><span class="ic">👹</span><span>
+        BOSS 关不拼时间，每消一对砍它一刀</span></div>
+    </div>
+    <div class="note">不认识的词会记进"生词本"，过关后能回看</div>
+    <button class="cbtn" id="howClose" style="margin-top:16px">知道了</button>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* ==========================================================================
+   ⚙️ CONFIG
+   ========================================================================== */
+const CONFIG = {
+  name: "超级071大王",
+  tagline: "把四级单词点成一对一对的方块",
+  finalMessage: "十二关全部消完了。<br>这些四级词，是你一个方块一个方块敲碎的 💥"
+};
+
+/* ==========================================================================
+   四级词汇库（CET-4）
+   ========================================================================== */
+const CET4 = [
+["abandon","放弃"],["absorb","吸收"],["abstract","抽象的"],["academic","学术的"],
+["accelerate","加速"],["accompany","陪伴"],["accomplish","完成"],["accurate","准确的"],
+["accuse","指控"],["acquire","获取"],["adapt","适应"],["adequate","适当的"],
+["adjust","调整"],["admire","钦佩"],["adopt","采纳"],["advance","前进"],
+["affect","影响"],["afford","负担得起"],["aggressive","好斗的"],["alter","改变"],
+["ambitious","有雄心的"],["analyze","分析"],["announce","宣布"],["annual","每年的"],
+["anxious","焦虑的"],["apparent","表面上的"],["appeal","呼吁"],["appreciate","感激"],
+["appropriate","恰当的"],["approve","批准"],["argue","争论"],["arrange","安排"],
+["assess","评估"],["assist","协助"],["assume","假定"],["attach","系上；附加"],
+["attempt","尝试"],["attitude","态度"],["attract","吸引"],["authority","权威"],
+["available","可获得的"],["avoid","避免"],["aware","意识到的"],["balance","平衡"],
+["barrier","障碍"],["behave","表现"],["benefit","益处"],["brief","简短的"],
+["broad","宽阔的"],["budget","预算"],["calculate","计算"],["campaign","运动"],
+["capable","有能力的"],["capture","捕获"],["career","生涯"],["casual","随意的"],
+["cease","停止"],["challenge","挑战"],["character","性格"],["claim","声称"],
+["classify","分类"],["client","客户"],["combine","结合"],["comment","评论"],
+["commercial","商业的"],["commit","承诺；犯"],["communicate","交流"],["compare","比较"],
+["compete","竞争"],["complain","抱怨"],["complex","复杂的"],["concentrate","集中"],
+["conclude","得出结论"],["conduct","进行"],["confident","自信的"],["confirm","确认"],
+["conflict","冲突"],["confuse","使困惑"],["connect","连接"],["conscious","有意识的"],
+["consequence","后果"],["consider","考虑"],["consist","由…组成"],["constant","不断的"],
+["construct","建造"],["consume","消耗"],["contain","包含"],["contemporary","当代的"],
+["context","语境"],["contract","合同"],["contrast","对比"],["contribute","贡献"],
+["convenient","方便的"],["convert","转换"],["convince","使信服"],["cooperate","合作"],
+["criticize","批评"],["crucial","关键的"],["cultivate","培养"],["curious","好奇的"],
+["current","当前的"],["decline","下降；拒绝"],["dedicate","献身"],["defeat","击败"],
+["define","定义"],["deliver","递送"],["demand","要求"],["demonstrate","证明"],
+["deny","否认"],["depend","依赖"],["describe","描述"],["deserve","值得"],
+["desire","渴望"],["despite","尽管"],["destroy","摧毁"],["determine","决定"],
+["device","装置"],["devote","奉献"],["distinguish","区分"],["distribute","分配"],
+["disturb","打扰"],["domestic","国内的"],["dominate","支配"],["doubt","怀疑"],
+["efficient","高效的"],["eliminate","消除"],["emerge","出现"],["emphasize","强调"],
+["employ","雇用"],["enable","使能够"],["encounter","遭遇"],["encourage","鼓励"],
+["endure","忍耐"],["enhance","提高"],["enormous","巨大的"],["ensure","确保"],
+["entire","整个的"],["equip","装备"],["essential","必要的"],["establish","建立"],
+["estimate","估计"],["evaluate","评价"],["eventually","最终"],["evidence","证据"],
+["exaggerate","夸大"],["examine","检查"],["exceed","超过"],["exchange","交换"],
+["exclude","排除"],["exhibit","展出"],["expand","扩展"],["expense","费用"],
+["explore","探索"],["expose","暴露"],["express","表达"],["extend","延伸"],
+["external","外部的"],["extreme","极端的"],["familiar","熟悉的"],["feature","特征"],
+["finance","财政"],["flexible","灵活的"],["forbid","禁止"],["forecast","预报"],
+["formal","正式的"],["fortune","财富；运气"],["foundation","基础"],["frequent","频繁的"],
+["fundamental","基本的"],["generate","产生"],["genuine","真正的"],["gradual","逐渐的"],
+["grateful","感激的"],["guarantee","保证"],["guilty","有罪的"],["handle","处理"],
+["hesitate","犹豫"],["identify","识别"],["ignore","不理会"],["illustrate","说明"],
+["imitate","模仿"],["immediate","立即的"],["impact","冲击"],["imply","暗示"],
+["impress","使印象深刻"],["improve","改进"],["indicate","表明"],["individual","个人的"],
+["influence","影响力"],["inform","通知"],["initial","最初的"],["injure","伤害"],
+["innocent","无辜的"],["inquire","询问"],["insist","坚持"],["inspire","激励"],
+["install","安装"],["instant","瞬间的"],["institute","机构"],["instruct","指导"],
+["intend","打算"],["intense","强烈的"],["interpret","解释"],["introduce","介绍"],
+["invest","投资"],["investigate","侦查"],["involve","涉及"],["isolate","隔离"],
+["justify","证明正当"],["labor","劳动"],["launch","发起；发射"],["legal","合法的"],
+["locate","定位"],["maintain","维持"],["major","主要的"],["manage","管理"],
+["manufacture","制造"],["mature","成熟的"],["measure","测量"],["mention","提及"],
+["method","方法"],["military","军事的"],["minimum","最小的"],["modify","修改"],
+["motive","动机"],["negative","消极的"],["neglect","疏忽"],["obey","服从"],
+["observe","观察"],["obtain","获得"],["obvious","明显的"],["occupy","占据"],
+["occur","发生"],["operate","操作"],["opportunity","机会"],["oppose","反对"],
+["organize","组织"],["original","原始的"],["overcome","克服"],["participate","参与"],
+["particular","特定的"],["passion","激情"],["patient","有耐心的"],["perform","执行；表演"],
+["permanent","永久的"],["persuade","说服"],["physical","身体的"],["policy","政策"],
+["pollute","污染"],["positive","积极的"],["possess","拥有"],["potential","潜在的"],
+["practical","实际的"],["precise","精确的"],["predict","预测"],["prefer","更喜欢"],
+["prejudice","偏见"],["preserve","保存"],["pressure","压力"],["prevent","阻止"],
+["previous","先前的"],["primary","首要的"],["principle","原则"],["priority","优先"],
+["process","过程"],["profession","职业"],["profit","利润"],["progress","进步"],
+["prohibit","严禁"],["promote","促进"],["propose","提议"],["protect","保护"],
+["provide","提供"],["publish","出版"],["purchase","购买"],["pursue","追求"],
+["quantity","数量"],["reaction","反应"],["realize","意识到"],["reasonable","合理的"],
+["recall","回忆"],["recognize","认出"],["recommend","推荐"],["recover","恢复"],
+["reduce","减少"],["reflect","反映"],["reform","改革"],["refuse","拒绝"],
+["regard","认为"],["region","地区"],["register","注册"],["regret","后悔"],
+["regular","规则的"],["reject","驳回"],["release","释放"],["reliable","可靠的"],
+["relieve","减轻"],["remain","保持"],["remark","评述"],["remind","提醒"],
+["remove","移除"],["repair","修理"],["replace","替换"],["represent","代表"],
+["require","需要"],["rescue","营救"],["research","研究"],["reserve","预订"],
+["resist","抵抗"],["resource","资源"],["respond","回应"],["responsible","负责的"],
+["restrict","限制"],["retain","保留"],["retire","退休"],["reveal","揭示"],
+["reverse","颠倒"],["review","复习"],["revise","修订"],["reward","奖励"],
+["satisfy","满足"],["scarce","稀少的"],["schedule","日程"],["seek","寻找"],
+["select","挑选"],["sensitive","敏感的"],["separate","分开"],["sequence","顺序"],
+["settle","解决；定居"],["severe","严重的"],["shortage","短缺"],["significant","重要的"],
+["similar","相似的"],["simplify","简化"],["sincere","真诚的"],["situation","情况"],
+["solve","解决"],["source","来源"],["specific","具体的"],["stable","稳定的"],
+["standard","标准"],["statement","陈述"],["strategy","策略"],["strengthen","加强"],
+["strict","严格的"],["structure","结构"],["struggle","挣扎"],["submit","提交"],
+["substitute","替代"],["succeed","成功"],["sufficient","充足的"],["suggest","建议"],
+["suitable","合适的"],["supply","供应"],["support","支持"],["suppose","假设"],
+["surface","表面"],["surround","包围"],["survey","调查"],["survive","幸存"],
+["suspect","嫌疑"],["sustain","支撑"],["switch","切换"],["sympathy","同情"],
+["tend","倾向"],["tension","紧张"],["threaten","威胁"],["tolerate","容忍"],
+["transfer","转移"],["transform","转变"],["translate","翻译"],["transport","运输"],
+["treat","对待"],["tremble","颤抖"],["trend","趋势"],["trial","试验"],
+["typical","典型的"],["ultimate","最终的"],["unique","独特的"],["urgent","紧急的"],
+["utilize","利用"],["vacant","空的"],["vague","模糊的"],["valid","有效的"],
+["vanish","消失"],["variety","多样性"],["various","各种各样的"],["vary","变化"],
+["vast","广阔的"],["version","版本"],["victim","受害者"],["violate","违反"],
+["virtual","虚拟的"],["virtue","美德"],["vital","至关重要的"],["volume","体积；音量"],
+["voluntary","自愿的"],["wander","漫步"],["warn","警告"],["witness","目击者"],
+["worship","崇拜"],["yield","产生；屈服"]
+].map(([en, zh], i) => ({id:i, en, zh}));
+
+/* ==========================================================================
+   关卡
+   ========================================================================== */
+const LEVELS = [
+  {n:1,  name:"热身",     cols:4, rows:5, time:65, goal:10, sp:0},
+  {n:2,  name:"顺手",     cols:4, rows:5, time:60, goal:12, sp:0},
+  {n:3,  name:"起风",     cols:4, rows:5, time:58, goal:13, sp:.07},
+  {n:4,  name:"炸弹怪",   cols:4, rows:5, time:62, boss:8,  sp:.10, icon:"💣"},
+  {n:5,  name:"阶梯",     cols:4, rows:6, time:62, goal:15, sp:.10},
+  {n:6,  name:"回声",     cols:4, rows:6, time:60, goal:16, sp:.12},
+  {n:7,  name:"暗流",     cols:4, rows:6, time:58, goal:17, sp:.14},
+  {n:8,  name:"夜枭",     cols:4, rows:6, time:66, boss:10, sp:.16, icon:"🦉"},
+  {n:9,  name:"密林",     cols:4, rows:7, time:64, goal:18, sp:.16},
+  {n:10, name:"深渊",     cols:4, rows:7, time:62, goal:19, sp:.18},
+  {n:11, name:"天梯",     cols:4, rows:7, time:60, goal:20, sp:.20},
+  {n:12, name:"终焉之龙", cols:4, rows:7, time:72, boss:12, sp:.22, icon:"🐉"}
+];
+const TOTAL_LV = LEVELS.length;
+const MAX_STARS = TOTAL_LV * 3;
+
+/* ==========================================================================
+   存档
+   ========================================================================== */
+const KEY = "wordCrush.v1";
+const blank = () => ({unlocked:1, stars:{}, best:{}, total:0, seen:[], cleared:false});
+let save;
+try {
+  const raw = localStorage.getItem(KEY);
+  save = raw ? Object.assign(blank(), JSON.parse(raw)) : blank();
+  save.stars = save.stars || {}; save.best = save.best || {}; save.seen = save.seen || [];
+} catch (e) { save = blank(); }
+const persist = () => { try { localStorage.setItem(KEY, JSON.stringify(save)); } catch (e) {} };
+
+/* ==========================================================================
+   音效
+   ========================================================================== */
+const Sfx = {
+  ctx:null, master:null, on:true, pad:null,
+  init(){
+    if (this.ctx) return;
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) { this.on = false; return; }
+    this.ctx = new AC();
+    this.master = this.ctx.createGain();
+    this.master.gain.value = .4;
+    this.master.connect(this.ctx.destination);
+  },
+  resume(){ if (this.ctx && this.ctx.state === "suspended") this.ctx.resume(); },
+  tone(f, o){
+    o = o || {};
+    if (!this.on || !this.ctx) return;
+    const t = this.ctx.currentTime + (o.delay || 0);
+    const osc = this.ctx.createOscillator(), g = this.ctx.createGain();
+    osc.type = o.type || "sine";
+    osc.frequency.setValueAtTime(f, t);
+    if (o.to) osc.frequency.exponentialRampToValueAtTime(o.to, t + (o.dur || .5));
+    const gain = o.gain == null ? .13 : o.gain;
+    g.gain.setValueAtTime(.0001, t);
+    g.gain.exponentialRampToValueAtTime(gain, t + .012);
+    g.gain.exponentialRampToValueAtTime(.0001, t + (o.dur || .5));
+    osc.connect(g); g.connect(this.master);
+    osc.start(t); osc.stop(t + (o.dur || .5) + .04);
+  },
+  noise(dur, gain, freq){
+    if (!this.on || !this.ctx) return;
+    dur = dur || .22; gain = gain || .1; freq = freq || 1100;
+    const t = this.ctx.currentTime;
+    const n = Math.floor(this.ctx.sampleRate * dur);
+    const buf = this.ctx.createBuffer(1, n, this.ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
+    const s = this.ctx.createBufferSource(); s.buffer = buf;
+    const f = this.ctx.createBiquadFilter();
+    f.type = "bandpass"; f.frequency.value = freq; f.Q.value = 1;
+    const g = this.ctx.createGain(); g.gain.value = gain;
+    s.connect(f); f.connect(g); g.connect(this.master); s.start(t);
+  },
+  SCALE:[523.25,587.33,659.25,783.99,880,1046.5,1174.66,1318.51,1567.98,1760,2093],
+  match(combo){
+    const n = this.SCALE[Math.min(combo, this.SCALE.length - 1)];
+    this.tone(n, {dur:.42, type:"triangle", gain:.15});
+    this.tone(n * 1.5, {dur:.3, type:"sine", gain:.05, delay:.02});
+    this.noise(.13, .05, 2400);
+  },
+  miss(){
+    this.tone(190, {dur:.3, type:"sawtooth", gain:.07, to:120});
+    this.tone(140, {dur:.34, type:"sine", gain:.08, delay:.02});
+  },
+  boom(){
+    this.tone(150, {dur:.42, type:"square", gain:.11, to:52});
+    this.noise(.42, .17, 480);
+    this.noise(.22, .1, 1800);
+  },
+  chime(){
+    [880, 1320, 1760].forEach((f, i) =>
+      this.tone(f, {dur:.5, type:"sine", gain:.1, delay:i * .06}));
+  },
+  spark(){
+    [1320, 1760, 2349].forEach((f, i) =>
+      this.tone(f, {dur:.34, type:"square", gain:.06, delay:i * .05}));
+  },
+  hurt(){
+    this.tone(300, {dur:.2, type:"square", gain:.09, to:110});
+    this.noise(.2, .12, 800);
+  },
+  tick(){ this.tone(1500, {dur:.05, type:"sine", gain:.05}); },
+  win(){ [523.25,659.25,783.99,1046.5,1318.51].forEach((f,i)=>
+    this.tone(f,{dur:.72,type:"triangle",gain:.13,delay:i*.1})); },
+  lose(){ [392,349.23,293.66,261.63].forEach((f,i)=>
+    this.tone(f,{dur:.58,type:"sine",gain:.11,delay:i*.13})); },
+  click(){ this.tone(1050, {dur:.05, type:"sine", gain:.04}); },
+  startPad(){
+    if (!this.ctx || this.pad || !this.on) return;
+    const t = this.ctx.currentTime;
+    const g = this.ctx.createGain(); g.gain.value = .0001;
+    const f = this.ctx.createBiquadFilter();
+    f.type = "lowpass"; f.frequency.value = 500;
+    g.connect(f); f.connect(this.master);
+    const oscs = [82.41, 123.47, 164.81, 246.94].map((hz, i) => {
+      const o = this.ctx.createOscillator();
+      o.type = i % 2 ? "sine" : "triangle";
+      o.frequency.value = hz * (1 + (i - 1.5) * .0018);
+      o.connect(g); o.start(t); return o;
+    });
+    const lfo = this.ctx.createOscillator(), lg = this.ctx.createGain();
+    lfo.frequency.value = .06; lg.gain.value = .016;
+    lfo.connect(lg); lg.connect(g.gain); lfo.start(t);
+    g.gain.exponentialRampToValueAtTime(.042, t + 5);
+    this.pad = {oscs, g, lfo};
+  },
+  stopPad(){
+    if (!this.pad || !this.ctx) return;
+    const {oscs, g, lfo} = this.pad, t = this.ctx.currentTime;
+    try {
+      g.gain.cancelScheduledValues(t);
+      g.gain.setValueAtTime(g.gain.value, t);
+      g.gain.exponentialRampToValueAtTime(.0001, t + 1);
+      oscs.forEach(o => o.stop(t + 1.2)); lfo.stop(t + 1.2);
+    } catch (e) {}
+    this.pad = null;
+  }
+};
+
+/* ==========================================================================
+   朗读
+   ========================================================================== */
+const TTS = {
+  voice:null,
+  pick(){
+    if (!("speechSynthesis" in window)) return;
+    const vs = speechSynthesis.getVoices();
+    if (!vs.length) return;
+    for (const w of ["Google US English","Microsoft Aria","Microsoft Zira","Samantha"]) {
+      const v = vs.find(x => x.name && x.name.includes(w));
+      if (v) { this.voice = v; return; }
+    }
+    this.voice = vs.find(x => /^en[-_]US/i.test(x.lang)) || vs.find(x => /^en/i.test(x.lang)) || null;
+  },
+  say(text, rate){
+    if (!("speechSynthesis" in window)) return;
+    try {
+      speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = "en-US"; u.rate = rate || .88;
+      if (this.voice) u.voice = this.voice;
+      speechSynthesis.speak(u);
+    } catch (e) {}
+  }
+};
+if ("speechSynthesis" in window) {
+  TTS.pick();
+  speechSynthesis.onvoiceschanged = () => TTS.pick();
+}
+
+/* ==========================================================================
+   工具
+   ========================================================================== */
+const $ = id => document.getElementById(id);
+const rnd = n => Math.floor(Math.random() * n);
+const sample = a => a[rnd(a.length)];
+const esc = s => String(s).replace(/[&<>"']/g, c =>
+  ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function shuffled(a){
+  const r = a.slice();
+  for (let i = r.length - 1; i > 0; i--) { const j = rnd(i + 1); [r[i], r[j]] = [r[j], r[i]]; }
+  return r;
+}
+const buzz = ms => { if (navigator.vibrate) { try { navigator.vibrate(ms); } catch (e) {} } };
+
+/* 根据文字长度和方块尺寸决定字号（文字允许折行，这里只保证不溢出） */
+function fontFor(text, isEn, w, h){
+  const base = Math.min(w, h);   // w/h 已扣掉内边距
+  const n = text.length;
+  if (isEn) {
+    if (n <= 5)  return Math.round(Math.min(18, base * .30));
+    if (n <= 7)  return Math.round(Math.min(15, base * .25));
+    if (n <= 9)  return Math.round(Math.min(13, base * .215));
+    return Math.round(Math.min(11, base * .185));
+  }
+  if (n <= 3) return Math.round(Math.min(19, base * .30));
+  if (n <= 5) return Math.round(Math.min(16, base * .255));
+  return Math.round(Math.min(14, base * .22));
+}
+
+/* ==========================================================================
+   背景
+   ========================================================================== */
+(function blobs(){
+  const bg = $("bg");
+  ["#7b5cff","#25e0ae","#ff5f8f","#4f7cff"].forEach(c => {
+    const d = document.createElement("div");
+    d.className = "blob";
+    const s = 150 + rnd(150);
+    d.style.cssText = `width:${s}px;height:${s}px;background:${c};` +
+      `left:${rnd(85)}%;top:${rnd(80)}%;` +
+      `animation-duration:${24 + rnd(20)}s;animation-delay:${-rnd(18)}s`;
+    bg.appendChild(d);
+  });
+})();
+
+/* ==========================================================================
+   特效
+   ========================================================================== */
+function flyText(x, y, txt, minus){
+  const d = document.createElement("div");
+  d.className = "fly" + (minus ? " minus" : "");
+  d.textContent = txt;
+  d.style.left = x + "px"; d.style.top = y + "px";
+  document.body.appendChild(d);
+  d.animate([
+    {transform:"translate(-50%,-50%) scale(.5)", opacity:0},
+    {transform:"translate(-50%,-135%) scale(1.15)", opacity:1, offset:.24},
+    {transform:"translate(-50%,-250%) scale(.9)", opacity:0}
+  ], {duration:1000, easing:"cubic-bezier(.2,.85,.3,1)", fill:"forwards"})
+   .onfinish = () => d.remove();
+}
+
+function showCombo(n){
+  if (n < 2) return;
+  const el = $("comboEl");
+  el.textContent = n >= 8 ? `🔥 ${n} 连` : `${n} 连击`;
+  el.classList.remove("go"); void el.offsetWidth; el.classList.add("go");
+}
+
+function flash(){
+  const v = $("vig");
+  v.classList.add("on");
+  setTimeout(() => v.classList.remove("on"), 160);
+}
+
+function confetti(count, x, y){
+  const cols = ["#7b5cff","#25e0ae","#ffc53d","#ff5f8f","#4f7cff","#ff9a5c"];
+  for (let i = 0; i < (count || 30); i++) {
+    const d = document.createElement("div");
+    d.className = "conf";
+    d.style.background = sample(cols);
+    if (x == null) { d.style.left = (8 + Math.random() * 84) + "vw"; d.style.top = "-20px"; }
+    else { d.style.left = x + "px"; d.style.top = y + "px"; }
+    if (Math.random() < .4) d.style.borderRadius = "50%";
+    document.body.appendChild(d);
+    const dx = (Math.random() - .5) * 240;
+    const dy = x == null ? window.innerHeight + 60 : (Math.random() - .5) * 260 - 40;
+    d.animate([
+      {transform:"translate(0,0) rotate(0deg)", opacity:1},
+      {transform:`translate(${dx}px,${dy}px) rotate(${Math.random()*900-450}deg)`, opacity:.8}
+    ], {duration:1400 + Math.random() * 1200, easing:"cubic-bezier(.25,.6,.5,1)",
+        fill:"forwards", delay:Math.random() * 350})
+     .onfinish = () => d.remove();
+  }
+}
+
+let teachTimer = null;
+function teach(html, ms){
+  const el = $("teach");
+  el.innerHTML = html;
+  el.classList.add("on");
+  clearTimeout(teachTimer);
+  teachTimer = setTimeout(() => el.classList.remove("on"), ms || 2000);
+}
+
+/* ==========================================================================
+   屏幕
+   ========================================================================== */
+const screens = ["home","map","play"];
+const go = id => screens.forEach(s => $(s).classList.toggle("on", s === id));
+const modal = (id, on) => $(id).classList.toggle("on", !!on);
+const closeModals = () => ["mWin","mLose","mFinal","mHow"].forEach(m => modal(m, false));
+
+/* ==========================================================================
+   棋盘模型
+   ==========================================================================
+   grid[c] = [tile, ...] 从上到下，长度恒为 rows
+   tile = {id, wid, type:'en'|'zh', text, special, col, row, el}
+   不变量：场上任何方块，它的配对对象一定也在场上
+   ========================================================================== */
+const B = {
+  cols:4, rows:5,
+  grid:[],        // [col][row]
+  all:[],         // 所有 tile
+  sel:null,
+  nextId:1,
+  busy:false
+};
+
+function makeTile(wid, type, special){
+  const w = CET4[wid];
+  return {
+    id: B.nextId++,
+    wid,
+    type,
+    text: type === "en" ? w.en : w.zh,
+    special: special || null,
+    col:0, row:0, el:null
+  };
+}
+
+/* 建立初始棋盘 */
+function buildBoard(cols, rows, specialRate){
+  B.cols = cols; B.rows = rows;
+  B.sel = null; B.busy = false; B.nextId = 1;
+
+  // 彻底清掉旧的
+  const board = $("board");
+  board.innerHTML = "";
+  B.grid = []; B.all = [];
+
+  const pairs = (cols * rows) / 2;
+  const picked = shuffled(CET4).slice(0, pairs);
+
+  const tiles = [];
+  for (const w of picked) {
+    tiles.push(makeTile(w.id, "en", null));
+    tiles.push(makeTile(w.id, "zh", null));
+  }
+
+  // 打乱后按列自上而下填充
+  const flat = shuffled(tiles);
+  for (let c = 0; c < cols; c++) {
+    B.grid[c] = [];
+    for (let r = 0; r < rows; r++) {
+      const t = flat[c * rows + r];
+      if (!t) continue;
+      t.col = c; t.row = r;
+      B.grid[c][r] = t;
+      B.all.push(t);
+    }
+  }
+
+  assignSpecials(specialRate);
+
+  // 建 DOM
+  for (const t of B.all) {
+    t.el = document.createElement("div");
+    t.el.className = "tile " + t.type;
+    t.el.innerHTML = '<div class="face"></div>';
+    t.el.querySelector(".face").textContent = t.text;
+    t.el.addEventListener("pointerdown", ev => { ev.preventDefault(); onTileTap(t); });
+    board.appendChild(t.el);
+  }
+
+  // 角标必须等 DOM 建好之后再画（assignSpecials 里 el 还是 null）
+  for (const t of B.all) if (t.special) paintFlag(t);
+
+  layoutAll(false);
+}
+
+/* 随机给若干"配对标"打上特殊标记 */
+function assignSpecials(rate){
+  if (!rate) return;
+  // 按词分组
+  const byWid = new Map();
+  for (const t of B.all) {
+    if (!byWid.has(t.wid)) byWid.set(t.wid, []);
+    byWid.get(t.wid).push(t);
+  }
+  const wids = shuffled([...byWid.keys()]);
+  const count = Math.max(0, Math.round(wids.length * rate));
+  for (let i = 0; i < count; i++) {
+    const grp = byWid.get(wids[i]);
+    if (!grp) continue;
+    const q = Math.random();
+    const kind = q < .40 ? "bomb" : (q < .72 ? "time" : "bolt");
+    grp.forEach(t => { t.special = kind; paintFlag(t); });
+  }
+}
+
+function paintFlag(t){
+  if (!t.el) return;
+  const face = t.el.querySelector(".face");
+  let f = face.querySelector(".flag");
+  if (!t.special) { if (f) f.remove(); return; }
+  if (!f) {
+    f = document.createElement("span");
+    face.appendChild(f);
+  }
+  f.className = "flag " + t.special;
+  f.textContent = t.special === "bomb" ? "💣" : (t.special === "time" ? "⏰" : "⚡");
+}
+
+/* 计算每个 tile 的位置 / 尺寸 / 字号
+   instant=false 时保留 transform 过渡，方块掉落才是滑下去的 */
+function layoutAll(instant){
+  const W = 100 / B.cols, H = 100 / B.rows;
+  const board = $("board");
+  const bw = board.clientWidth / B.cols;
+  const bh = board.clientHeight / B.rows;
+
+  if (instant) for (const t of B.all) if (t.el) t.el.style.transition = "none";
+
+  for (const t of B.all) {
+    if (!t.el) continue;
+    t.el.style.width = W + "%";
+    t.el.style.height = H + "%";
+    t.el.style.transform = `translate(${t.col * 100}%,${t.row * 100}%)`;
+    const face = t.el.querySelector(".face");
+    if (face) face.style.fontSize = fontFor(t.text, t.type === "en", bw - 18, bh - 18) + "px";
+  }
+
+  if (instant) {
+    void board.offsetWidth;                 // 强制重排，再统一恢复过渡
+    for (const t of B.all) if (t.el) t.el.style.transition = "";
+  }
+}
+
+window.addEventListener("resize", () => { if (B.all.length) layoutAll(true); });
+
+/* -------- 点击 -------- */
+function onTileTap(t){
+  if (B.busy || !G.running || t.dead) return;
+  Sfx.resume();
+  G.idle = 0;
+
+  // 点英文块 → 朗读
+  if (t.type === "en") TTS.say(CET4[t.wid].en);
+
+  // 取消选中
+  if (B.sel === t) {
+    t.el.classList.remove("sel");
+    B.sel = null;
+    Sfx.click();
+    return;
+  }
+
+  // 第一次选
+  if (!B.sel) {
+    B.sel = t;
+    t.el.classList.add("sel");
+    clearHint();
+    Sfx.tone(t.type === "en" ? 660 : 560, {dur:.1, type:"sine", gain:.06});
+    return;
+  }
+
+  // 第二次选 → 判定
+  const a = B.sel, b = t;
+  if (a.wid === b.wid && a.type !== b.type) {
+    a.el.classList.remove("sel");
+    B.sel = null;
+    resolveMatch(a, b);
+  } else {
+    // 配错
+    B.sel = null;
+    a.el.classList.remove("sel");
+    a.el.classList.add("bad"); b.el.classList.add("bad");
+    setTimeout(() => {
+      a.el && a.el.classList.remove("bad");
+      b.el && b.el.classList.remove("bad");
+    }, 460);
+    onMiss(a, b);
+  }
+}
+
+/* -------- 配对成功 -------- */
+function resolveMatch(a, b){
+  B.busy = true;
+  G.idle = 0;
+  G.combo++;
+  G.maxCombo = Math.max(G.maxCombo, G.combo);
+  G.pairs++;
+
+  const mult = 1 + Math.min(G.combo - 1, 9) * .15;
+  let gain = Math.round(120 * mult);
+
+  // 消对加时间（不超过本关的时间上限）
+  G.time = Math.min(G.timeMax, G.time + 2.0);
+
+  Sfx.match(G.combo - 1);
+  buzz(10);
+
+  // 特殊效果 —— 必须在移除任何方块之前判定
+  const special = a.special || b.special;
+  const victims = new Set([a, b]);
+
+  if (special === "bomb") {
+    Sfx.boom(); buzz([18, 30, 26]);
+    for (const t of [a, b]) for (const nb of neighborsOf(t)) victims.add(nb);
+    // 被炸到的方块连它的另一半一起走，否则场上会剩孤块
+    for (const v of [...victims]) {
+      const mate = mateOf(v);
+      if (mate) victims.add(mate);
+    }
+    const extra = (victims.size - 2) * 45;
+    gain += extra;
+    flash();
+  }
+  else if (special === "time") {
+    Sfx.chime();
+    G.timeMax += 8;
+    G.time += 8;
+    gain += 60;
+    flyText(...centerOf(a), "+8s ⏰");
+  }
+  else if (special === "bolt") {
+    Sfx.spark();
+    const extra = randomPairOnBoard(victims);
+    if (extra) {
+      victims.add(extra[0]); victims.add(extra[1]);
+      gain += 150;
+    }
+  }
+
+  G.score += gain;
+
+  // 计分飘字
+  const c = centerOf(a);
+  flyText(c[0], c[1], "+" + gain);
+
+  // 记录见过的词
+  const w = CET4[a.wid];
+  if (!save.seen.includes(w.en)) save.seen.push(w.en);
+
+  // BOSS 掉血
+  if (G.lv.boss) {
+    G.bossHp = Math.max(0, G.bossHp - 1);
+    Sfx.hurt();
+    const fig = $("bossFig");
+    if (fig) { fig.classList.remove("hurt"); void fig.offsetWidth; fig.classList.add("hurt"); }
+  }
+
+  // 消除动画
+  const list = [...victims];
+  for (const t of list) {
+    t.dead = true;
+    if (t.el) t.el.classList.add("pop");
+  }
+  for (const t of list.slice(0, 6)) confetti(3, ...centerOf(t));
+
+  showCombo(G.combo);
+  if (G.combo > 0 && G.combo % 4 === 0) confetti(24);
+  updateHud();
+  updateTimeBar();
+
+  setTimeout(() => {
+    for (const t of list) {
+      if (t.el && t.el.parentNode) t.el.remove();
+      const i = B.all.indexOf(t);
+      if (i >= 0) B.all.splice(i, 1);
+    }
+    for (let c2 = 0; c2 < B.cols; c2++) B.grid[c2] = B.grid[c2].filter(t => !t.dead);
+    refill();
+    B.busy = false;
+  }, 320);
+
+  checkProgress();
+}
+
+/* 消除之后补块。
+   关键不变量：新补的方块必须成对出现（同一个词的 en + zh），
+   否则场上会留下永远配不掉的孤块。 */
+function refill(){
+  const holes = [];
+  for (let c = 0; c < B.cols; c++) {
+    const miss = B.rows - B.grid[c].length;
+    for (let k = 0; k < miss; k++) holes.push(c);
+  }
+  if (!holes.length) { relayout(); return; }
+
+  // 消除总是成对发生，所以空位数是偶数；这里仍做一次防御
+  const needPairs = Math.ceil(holes.length / 2);
+  const avail = shuffled(CET4.filter(w => !onBoardWid(w.id)));
+  const pool = avail.length >= needPairs ? avail : shuffled(CET4);
+
+  const newTiles = [];
+  for (let i = 0; i < needPairs; i++) {
+    const w = pool[i] || sample(CET4);
+    const firstEn = Math.random() < .5;
+    newTiles.push(makeTile(w.id, firstEn ? "en" : "zh", null));
+    newTiles.push(makeTile(w.id, firstEn ? "zh" : "en", null));
+  }
+
+  // 打乱后塞进各列顶部
+  const bag = shuffled(newTiles).slice(0, holes.length);
+  const byCol = new Map();
+  holes.forEach((c, i) => {
+    if (!byCol.has(c)) byCol.set(c, []);
+    if (bag[i]) byCol.get(c).push(bag[i]);
+  });
+  for (const [c, list] of byCol) B.grid[c] = list.concat(B.grid[c]);
+
+  // 新方块建 DOM
+  const board = $("board");
+  for (const t of bag) {
+    if (t.el) continue;
+    t.el = document.createElement("div");
+    t.el.className = "tile " + t.type + " spawn";
+    t.el.innerHTML = '<div class="face"></div>';
+    t.el.querySelector(".face").textContent = t.text;
+    t.el.addEventListener("pointerdown", ev => { ev.preventDefault(); onTileTap(t); });
+    board.appendChild(t.el);
+    B.all.push(t);
+    setTimeout(() => t.el && t.el.classList.remove("spawn"), 420);
+  }
+
+  applySpecialsToNew(bag);
+  // 用 layoutAll 而不是 relayout：新方块还没有 width/height，必须一起设上
+  layoutAll(false);
+}
+
+function onBoardWid(wid){
+  return B.all.some(t => t.wid === wid && !t.dead);
+}
+
+function applySpecialsToNew(bag){
+  const rate = G.lv.sp;
+  if (!rate) return;
+  const byWid = new Map();
+  for (const t of bag) {
+    if (!byWid.has(t.wid)) byWid.set(t.wid, []);
+    byWid.get(t.wid).push(t);
+  }
+  for (const [wid, grp] of byWid) {
+    if (grp.length < 2) continue;
+    if (Math.random() > rate * 1.6) continue;
+    const q = Math.random();
+    const kind = q < .40 ? "bomb" : (q < .72 ? "time" : "bolt");
+    grp.forEach(t => { t.special = kind; paintFlag(t); });
+  }
+}
+
+/* 按列重新编号（填补空位后，上面的方块 row 变小 → 视觉上就是掉下来） */
+function relayout(instant){
+  for (let c = 0; c < B.cols; c++) {
+    B.grid[c].forEach((t, r) => { t.col = c; t.row = r; });
+  }
+  layoutAll(instant === true);
+}
+
+function neighborsOf(t){
+  const out = [];
+  for (let dc = -1; dc <= 1; dc++) {
+    for (let dr = -1; dr <= 1; dr++) {
+      if (!dc && !dr) continue;
+      const c = t.col + dc, r = t.row + dr;
+      if (c < 0 || c >= B.cols || r < 0 || r >= B.rows) continue;
+      const n = B.grid[c] && B.grid[c][r];
+      if (n && !n.dead) out.push(n);
+    }
+  }
+  return out;
+}
+
+/* 另一个半块（同词、异型、还活着）。
+   不变量保证每个词在场上恰好两个方块，所以这个查找是确定的。 */
+function mateOf(t){
+  return B.all.find(x => x !== t && x.wid === t.wid && x.type !== t.type && !x.dead) || null;
+}
+
+function randomPairOnBoard(exclude){
+  const cand = B.all.filter(t => !t.dead && !exclude.has(t) && !t.special);
+  const byWid = new Map();
+  for (const t of cand) {
+    if (!byWid.has(t.wid)) byWid.set(t.wid, []);
+    byWid.get(t.wid).push(t);
+  }
+  for (const [, grp] of byWid) {
+    const en = grp.find(x => x.type === "en"), zh = grp.find(x => x.type === "zh");
+    if (en && zh) return [en, zh];
+  }
+  return null;
+}
+
+function centerOf(t){
+  const r = t.el.getBoundingClientRect();
+  return [r.left + r.width / 2, r.top + r.height / 2];
+}
+
+/* -------- 配对失败 -------- */
+function onMiss(a, b){
+  B.busy = true;
+  G.idle = 0;
+  G.combo = 0;
+  G.err++;
+  G.time -= 3;
+  Sfx.miss();
+  buzz([16, 40, 16]);
+  flash();
+
+  const c = centerOf(b);
+  flyText(c[0], c[1], "-3s", true);
+
+  // 教学：把正确答案摆出来，顺便念一遍
+  const word = CET4[a.wid];
+  teach("<b>" + esc(word.en) + "</b> = " + esc(word.zh), 1900);
+  TTS.say(word.en);
+  if (!save.seen.includes(word.en)) save.seen.push(word.en);
+  if (!G.missed.some(w => w.en === word.en)) G.missed.push(word);
+
+  // 高亮这一对，帮助建立联系
+  if (a.el) a.el.classList.add("hintpair");
+  if (b.el) b.el.classList.add("hintpair");
+  setTimeout(() => {
+    if (a.el) a.el.classList.remove("hintpair");
+    if (b.el) b.el.classList.remove("hintpair");
+  }, 1000);
+
+  updateHud();
+  updateTimeBar();
+
+  setTimeout(() => { B.busy = false; }, 480);
+
+  if (G.time <= 0) endLevel(false);
+}
+
+/* -------- 提示（找不到配对时） -------- */
+let hintTiles = null;
+function clearHint(){
+  if (!hintTiles) return;
+  hintTiles.forEach(t => { if (t.el) t.el.classList.remove("hintpair"); });
+  hintTiles = null;
+}
+function autoHint(){
+  if (!G.running || B.busy || B.sel || hintTiles) return;
+  const p = randomPairOnBoard(new Set());
+  if (!p) return;
+  hintTiles = p;
+  p.forEach(t => t.el && t.el.classList.add("hintpair"));
+  setTimeout(() => { clearHint(); }, 2400);
+}
+
+/* ==========================================================================
+   游戏状态
+   ========================================================================== */
+const G = {
+  lv:null, running:false, busy:false,
+  time:0, timeMax:0, idle:0,
+  score:0, combo:0, maxCombo:0, pairs:0, err:0,
+  bossHp:0, bossMax:0,
+  missed:[]     // 本关配错过的词（过关回顾用）
+};
+
+function updateHud(){
+  $("hudSc").textContent = G.score;
+  const sc = $("hudSc");
+  sc.classList.remove("pop"); void sc.offsetWidth; sc.classList.add("pop");
+  setTimeout(() => sc.classList.remove("pop"), 190);
+
+  $("hudCombo").innerHTML = "连击 <b>" + G.combo + "</b>";
+  $("hudPairs").innerHTML = "已消除 <b>" + G.pairs + "</b> 对";
+  $("hudErr").innerHTML = "失误 <b>" + G.err + "</b>";
+
+  const lv = G.lv;
+  if (lv.boss) {
+    $("goalBar").style.width = ((G.bossMax - G.bossHp) / G.bossMax * 100) + "%";
+    $("goalNum").textContent = G.bossHp + "/" + G.bossMax;
+  } else {
+    $("goalBar").style.width = Math.min(100, G.pairs / lv.goal * 100) + "%";
+    $("goalNum").textContent = G.pairs + "/" + lv.goal;
+  }
+}
+
+function updateTimeBar(){
+  const frac = Math.max(0, Math.min(1, G.time / G.timeMax));
+  $("tfill").style.width = (frac * 100) + "%";
+  $("ttxt").textContent = Math.ceil(Math.max(0, G.time)) + "s";
+  const bar = $("tbar");
+  bar.classList.toggle("warn", frac <= .45 && frac > .22);
+  bar.classList.toggle("danger", frac <= .22);
+}
+
+function checkProgress(){
+  const lv = G.lv;
+  if (lv.boss) {
+    if (G.bossHp <= 0) setTimeout(() => endLevel(true), 480);
+  } else {
+    if (G.pairs >= lv.goal) setTimeout(() => endLevel(true), 480);
+  }
+}
+
+/* ==========================================================================
+   主循环
+   ========================================================================== */
+let lastT = 0;
+function tick(now){
+  requestAnimationFrame(tick);
+  if (!G.running) { lastT = now; return; }
+  const dt = Math.min(.05, (now - (lastT || now)) / 1000);
+  lastT = now;
+
+  G.time -= dt;
+  G.idle += dt;
+
+  if (G.time <= 0) { G.time = 0; updateTimeBar(); endLevel(false); return; }
+  updateTimeBar();
+
+  // 卡住时自动提示
+  if (G.idle > 7 && !B.sel && !B.busy) { autoHint(); G.idle = 0; }
+
+  // 最后 5 秒滴答
+  const s = Math.ceil(G.time);
+  if (s <= 5 && s !== G.lastTick) { G.lastTick = s; Sfx.tick(); }
+}
+
+/* ==========================================================================
+   关卡流程
+   ========================================================================== */
+function startLevel(n){
+  const lv = LEVELS.find(l => l.n === n);
+  if (!lv) return;
+  closeModals();
+  Sfx.init(); Sfx.resume();
+
+  G.lv = lv;
+  G.running = true;
+  G.time = lv.time;
+  G.timeMax = lv.time;
+  G.score = 0; G.combo = 0; G.maxCombo = 0;
+  G.pairs = 0; G.err = 0; G.idle = 0; G.lastTick = 99;
+  G.missed = [];
+  G.bossMax = lv.boss || 0;
+  G.bossHp = lv.boss || 0;
+  lastT = 0;
+
+  $("hudLv").innerHTML = "第 <b>" + lv.n + "</b> 关 · " + lv.name;
+
+  const goal = $("goal");
+  goal.classList.toggle("boss", !!lv.boss);
+  if (lv.boss) {
+    $("goalLbl").innerHTML = '<span class="bf" id="bossFig">' + (lv.icon || "👹") + "</span> " + lv.name;
+    $("goalNum").textContent = G.bossHp + "/" + G.bossMax;
+  } else {
+    $("goalLbl").textContent = "目标 " + lv.goal + " 对";
+    $("goalNum").textContent = "0/" + lv.goal;
+  }
+
+  go("play");
+  // 等布局稳定后再建棋盘，否则算不出方块尺寸
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    if (!G.running) return;
+    buildBoard(lv.cols, lv.rows, lv.sp);
+    updateHud(); updateTimeBar();
+  }));
+
+  Sfx.startPad();
+  teach(lv.boss
+    ? "👹 " + lv.name + " 出现 · 每消一对砍它一刀"
+    : "连成一对就消掉 · 目标 " + lv.goal + " 对", 2600);
+}
+
+function endLevel(passed){
+  if (!G.running) return;
+  G.running = false;
+  B.busy = true;
+  clearHint();
+  Sfx.stopPad();
+  if ("speechSynthesis" in window) speechSynthesis.cancel();
+
+  if (!passed) {
+    Sfx.lose();
+    $("loseTitle").textContent = G.lv.boss ? "被拦下了" : "时间到";
+    $("loseDesc").innerHTML = G.lv.boss
+      ? "还差 <b>" + G.bossHp + "</b> 刀就赢了<br>消除 <b>" + G.pairs + "</b> 对 · 失误 <em>" + G.err + "</em> 次"
+      : "这关要消掉 <b>" + G.lv.goal + "</b> 对<br>你消了 <b>" + G.pairs + "</b> 对 · 失误 <em>" + G.err + "</em> 次";
+    renderReview("lRev", G.missed);
+    modal("mLose", true);
+    return;
+  }
+
+  Sfx.win();
+  confetti(60);
+
+  const stars = G.err <= 2 ? 3 : (G.err <= 6 ? 2 : 1);
+  save.stars[G.lv.n] = Math.max(save.stars[G.lv.n] || 0, stars);
+  save.best[G.lv.n] = Math.max(save.best[G.lv.n] || 0, G.score);
+  save.total = Object.values(save.best).reduce((a, b) => a + b, 0);
+  if (G.lv.n >= save.unlocked && G.lv.n < TOTAL_LV) save.unlocked = G.lv.n + 1;
+  const isFinal = G.lv.n === TOTAL_LV;
+  if (isFinal) save.cleared = true;
+  persist();
+
+  $("winEm").textContent = G.lv.boss ? "⚔️" : (stars === 3 ? "🌟" : "🎉");
+  $("winTitle").textContent = G.lv.boss ? G.lv.name + " 被击破！" : "第 " + G.lv.n + " 关 通过";
+  $("winDesc").innerHTML = stars === 3
+    ? "几乎没出错，手很稳 ✨"
+    : (stars === 2 ? "小失误几次，过关了" : "过关了，这些词再练一遍会更熟");
+
+  $("wSc").textContent = G.score;
+  $("wPairs").textContent = G.pairs;
+  $("wCombo").textContent = G.maxCombo;
+  renderReview("wRev", G.missed);
+
+  fillStars(stars);
+
+  const nb = $("winNext");
+  if (isFinal) {
+    nb.textContent = "看看总成绩 →";
+    nb.onclick = () => { modal("mWin", false); showFinal(); };
+  } else {
+    nb.textContent = "第 " + (G.lv.n + 1) + " 关 →";
+    nb.onclick = () => startLevel(G.lv.n + 1);
+  }
+
+  modal("mWin", true);
+}
+
+function fillStars(stars){
+  const box = $("winStars");
+  box.innerHTML = "<i>★</i><i>★</i><i>★</i>";
+  const items = box.querySelectorAll("i");
+  for (let i = 0; i < stars; i++) {
+    setTimeout(() => {
+      items[i].classList.add("on");
+      Sfx.tone(660 + i * 220, {dur:.42, type:"triangle", gain:.12});
+      buzz(14);
+    }, 300 + i * 220);
+  }
+}
+
+function renderReview(id, words){
+  const box = $(id);
+  if (!words.length) {
+    box.innerHTML = '<div class="rw" style="justify-content:center;color:#7dffd4">' +
+      "<span>这一关一个词都没配错 🎯</span></div>";
+    return;
+  }
+  box.innerHTML = words.map((w, i) =>
+    '<div class="rw"><span class="e">' + esc(w.en) + '</span>' +
+    '<span class="z">' + esc(w.zh) + '</span>' +
+    '<button class="s" data-i="' + i + '">🔊</button></div>').join("");
+  box.querySelectorAll(".s").forEach(b => {
+    b.onclick = () => {
+      const w = words[Number(b.dataset.i)];
+      if (w) { Sfx.resume(); Sfx.click(); TTS.say(w.en); }
+    };
+  });
+}
+
+function showFinal(){
+  const st = Object.values(save.stars).reduce((a, b) => a + b, 0);
+  $("finalName").textContent = CONFIG.name;
+  $("finalDesc").innerHTML = CONFIG.finalMessage;
+  $("fStars").textContent = st + " / " + MAX_STARS;
+  $("fScore").textContent = save.total;
+  $("fWords").textContent = save.seen.length;
+  confetti(110);
+  Sfx.win();
+  modal("mFinal", true);
+}
+
+/* ==========================================================================
+   地图
+   ========================================================================== */
+function renderMap(){
+  $("road").innerHTML = LEVELS.map(lv => {
+    const stars = save.stars[lv.n] || 0;
+    const done = stars > 0;
+    const open = lv.n <= save.unlocked;
+    const isNext = lv.n === save.unlocked && !done;
+
+    const cls = ["node"];
+    if (done) cls.push("done");
+    if (isNext) cls.push("next");
+    if (!open) cls.push("lock");
+    if (lv.boss) cls.push("boss");
+
+    const starHtml = [0,1,2].map(i =>
+      '<i class="' + (i < stars ? "on" : "") + '">★</i>').join("");
+
+    const meta = lv.boss
+      ? "BOSS<span class=\"d\">·</span>砍 " + lv.boss + " 刀<span class=\"d\">·</span>" + lv.cols + "×" + lv.rows
+      : "消 " + lv.goal + " 对<span class=\"d\">·</span>" + lv.time + "s<span class=\"d\">·</span>" + lv.cols + "×" + lv.rows;
+
+    const icon = !open ? "🔒" : (lv.boss ? (lv.icon || "👹") : lv.n);
+
+    return '<button class="' + cls.join(" ") + '" data-n="' + lv.n + '"' + (open ? "" : " disabled") + '>' +
+      '<span class="idx">' + icon + "</span>" +
+      '<span class="bd"><span class="nm">' + lv.name + "</span>" +
+      '<span class="mt">' + meta + "</span></span>" +
+      (lv.boss ? "" : '<span class="stars">' + starHtml + "</span>") +
+      (save.best[lv.n] ? '<span class="best">最高 ' + save.best[lv.n] + "</span>" : "") +
+      "</button>";
+  }).join("");
+
+  $("road").querySelectorAll(".node").forEach(el => {
+    el.onclick = () => {
+      const n = Number(el.dataset.n);
+      if (n > save.unlocked) return;
+      Sfx.init(); Sfx.resume(); Sfx.click();
+      startLevel(n);
+    };
+  });
+
+  const total = Object.values(save.stars).reduce((a, b) => a + b, 0);
+  $("mapScore").textContent = "⭐ " + total + " / " + MAX_STARS;
+  $("mapSummary").textContent = save.cleared
+    ? "已全部通关 · 可以重刷星数"
+    : "已解锁 " + save.unlocked + " / " + TOTAL_LV + " 关 · ⭐ " + total;
+}
+
+/* ==========================================================================
+   事件
+   ========================================================================== */
+$("homeName").textContent = CONFIG.name;
+$("homeTag").textContent = CONFIG.tagline;
+document.title = CONFIG.name + " · 单词消消乐";
+
+$("btnPlay").onclick = () => {
+  Sfx.init(); Sfx.resume(); Sfx.click();
+  startLevel(save.cleared ? 1 : save.unlocked);
+};
+$("btnMap").onclick = () => { Sfx.init(); Sfx.resume(); Sfx.click(); renderMap(); go("map"); };
+$("btnHow").onclick = () => { Sfx.click(); modal("mHow", true); };
+$("howClose").onclick = () => { Sfx.click(); modal("mHow", false); };
+$("mapBack").onclick = () => { Sfx.click(); renderMap(); go("home"); };
+
+$("winRetry").onclick = () => startLevel(G.lv.n);
+$("winMap").onclick = () => { modal("mWin", false); renderMap(); go("map"); };
+$("loseRetry").onclick = () => startLevel(G.lv.n);
+$("loseMap").onclick = () => { modal("mLose", false); renderMap(); go("map"); };
+$("finalMap").onclick = () => { modal("mFinal", false); renderMap(); go("map"); };
+
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") {
+    if (["mHow","mWin","mLose","mFinal"].some(m => $(m).classList.contains("on"))) closeModals();
+    else if (G.running) { G.running = false; Sfx.stopPad(); renderMap(); go("map"); }
+  }
+});
+
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden && G.running) {
+    G.running = false;
+    Sfx.stopPad();
+    if ("speechSynthesis" in window) speechSynthesis.cancel();
+    renderMap(); go("map");
+    teach("已暂停 · 关卡需要重新开始", 2200);
+  }
+});
+
+document.addEventListener("gesturestart", e => e.preventDefault());
+document.addEventListener("dblclick", e => e.preventDefault());
+window.addEventListener("orientationchange", () => setTimeout(() => B.all.length && layoutAll(true), 260));
+
+/* 启动 */
+renderMap();
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>
