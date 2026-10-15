@@ -1,608 +1,276 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover,user-scalable=no">
-<meta name="theme-color" content="#080716">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-<title>单词消消乐</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#eaf7ef">
+<title>碎碎花园 · Word Garden</title>
 <style>
-:root{
-  --bg:#080716;
-  --ink:#f3f1ff;
-  --ink2:#a49ecb;
-  --ink3:#6a6494;
-
-  --en-a:#4f7cff;
-  --en-b:#7b5cff;
-  --zh-a:#ff5f8f;
-  --zh-b:#ff9a5c;
-
-  --gold:#ffc53d;
-  --mint:#25e0ae;
-  --red:#ff5470;
-
-  --line:rgba(255,255,255,.13);
-  --line2:rgba(255,255,255,.26);
-  --glass:rgba(255,255,255,.06);
-  --glass2:rgba(255,255,255,.11);
-
-  --st:env(safe-area-inset-top,0px);
-  --sb:env(safe-area-inset-bottom,0px);
-
-  --font:"Segoe UI",-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;
-}
-
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;overflow:hidden}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0}
 body{
-  font-family:var(--font);color:var(--ink);background:var(--bg);
-  overscroll-behavior:none;touch-action:manipulation;
-  user-select:none;-webkit-user-select:none;-webkit-font-smoothing:antialiased;
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Segoe UI",sans-serif;
+  background:linear-gradient(170deg,#e9f7ee 0%,#f3fbf5 42%,#fdf8ec 100%);
+  color:#2f3e46;overflow:hidden;user-select:none;-webkit-user-select:none;
+  touch-action:manipulation;
 }
-button{font-family:inherit;color:inherit;border:none;background:none;cursor:pointer}
+#app{display:flex;flex-direction:column;height:100dvh;max-width:540px;margin:0 auto;position:relative}
 
-/* ============ 背景 ============ */
-#bg{position:fixed;inset:0;z-index:0;overflow:hidden;
-  background:
-    radial-gradient(110% 60% at 50% -10%, #201a52 0%, transparent 60%),
-    radial-gradient(90% 50% at 50% 110%, #0d2a3f 0%, transparent 60%),
-    linear-gradient(180deg,#0d0b26 0%,#080716 65%,#050410 100%);
-}
-#bg::after{
-  content:"";position:absolute;inset:0;opacity:.7;
-  background-image:
-    radial-gradient(1.4px 1.4px at 14% 16%, rgba(255,255,255,.7), transparent),
-    radial-gradient(1.1px 1.1px at 76% 10%, rgba(255,255,255,.5), transparent),
-    radial-gradient(1.5px 1.5px at 36% 46%, rgba(180,160,255,.55), transparent),
-    radial-gradient(1.1px 1.1px at 65% 30%, rgba(255,255,255,.4), transparent),
-    radial-gradient(1.4px 1.4px at 86% 62%, rgba(150,220,255,.45), transparent),
-    radial-gradient(1.2px 1.2px at 20% 74%, rgba(255,255,255,.35), transparent),
-    radial-gradient(1.3px 1.3px at 54% 88%, rgba(255,180,220,.4), transparent);
-  animation:sdrift 80s linear infinite;
-}
-@keyframes sdrift{to{transform:translateY(-100px)}}
-.blob{position:absolute;border-radius:50%;filter:blur(72px);opacity:.26;pointer-events:none;
-  animation:bfloat linear infinite}
-@keyframes bfloat{
-  0%,100%{transform:translate(0,0) scale(1)}
-  50%{transform:translate(26px,-34px) scale(1.2)}
-}
+/* ---------- 顶栏 ---------- */
+#hud{display:flex;align-items:center;gap:10px;
+  padding:calc(env(safe-area-inset-top,0px) + 12px) 14px 8px;flex:0 0 auto}
+.stat{display:flex;align-items:center;gap:5px;font-weight:800;font-size:15px;
+  background:rgba(255,255,255,.78);border:1px solid rgba(150,190,165,.4);
+  border-radius:999px;padding:6px 12px;box-shadow:0 2px 8px rgba(90,140,110,.08)}
+.stat b{font-variant-numeric:tabular-nums}
+.stat.sun{color:#b7791f}
+.stat.cmb{color:#2f855a}
+.stat.cmb.off{opacity:.35}
+#hud .sp{flex:1}
+.iconbtn{width:38px;height:38px;border-radius:12px;border:1px solid rgba(150,190,165,.45);
+  background:rgba(255,255,255,.8);font-size:17px;line-height:1;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;padding:0}
+.iconbtn:active{transform:scale(.94)}
 
-/* ============ 屏幕 ============ */
-.screen{
-  position:fixed;inset:0;z-index:2;
-  display:flex;flex-direction:column;
-  padding:calc(var(--st) + 10px) 14px calc(var(--sb) + 10px);
-  opacity:0;visibility:hidden;transition:opacity .28s,visibility .28s;
-}
-.screen.on{opacity:1;visibility:visible}
-.wrap{width:100%;max-width:520px;margin:0 auto;flex:1;display:flex;
-  flex-direction:column;min-height:0}
+/* ---------- 屏幕 ---------- */
+main{flex:1;min-height:0;position:relative}
+.scr{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;
+  display:none;padding:4px 12px 12px}
+.scr.on{display:block}
 
-/* ============ 首页 ============ */
-#home .wrap{justify-content:center;align-items:center;text-align:center}
-.mascot{font-size:60px;line-height:1;margin-bottom:14px;
-  filter:drop-shadow(0 0 26px rgba(123,92,255,.7));
-  animation:mfloat 4.6s ease-in-out infinite}
-@keyframes mfloat{
-  0%,100%{transform:translateY(0) rotate(-4deg)}
-  50%{transform:translateY(-13px) rotate(4deg)}
-}
-h1.logo{
-  font-size:clamp(36px,11.5vw,52px);font-weight:900;letter-spacing:5px;line-height:1.05;
-  background:linear-gradient(115deg,#b9d0ff 0%,#7b5cff 30%,#25e0ae 62%,#ffc53d 100%);
-  -webkit-background-clip:text;background-clip:text;color:transparent;
-  background-size:220% 220%;animation:sheen 7s ease infinite;
-}
-@keyframes sheen{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
-.logo-sub{font-size:11.5px;letter-spacing:.45em;color:var(--ink3);
-  text-transform:uppercase;margin-top:11px;font-weight:700}
-
-.gift{margin-top:26px;font-size:14.5px;color:var(--ink2);letter-spacing:1px}
-.gift .nm{font-size:26px;font-weight:900;display:inline-block;margin:0 4px;
-  background:linear-gradient(100deg,#ff9ec4,#ffd6e8 42%,#ffc53d);
-  -webkit-background-clip:text;background-clip:text;color:transparent;
-  text-shadow:0 0 30px rgba(255,150,200,.35)}
-.gift .tag{display:block;font-size:12px;color:var(--ink3);margin-top:8px;letter-spacing:.5px}
-
-.big-btn{
-  width:100%;max-width:340px;margin-top:30px;padding:19px 24px;
-  border-radius:19px;font-size:18px;font-weight:900;letter-spacing:4px;
-  background:linear-gradient(120deg,#7b5cff,#25e0ae);color:#07051a;
-  box-shadow:0 10px 34px rgba(123,92,255,.45),inset 0 1px 0 rgba(255,255,255,.35);
-  transition:transform .16s cubic-bezier(.34,1.6,.64,1);position:relative;overflow:hidden;
-}
-.big-btn::after{content:"";position:absolute;top:0;left:-60%;width:40%;height:100%;
-  background:linear-gradient(100deg,transparent,rgba(255,255,255,.55),transparent);
-  animation:sweep 3.6s ease-in-out infinite}
-@keyframes sweep{0%{left:-60%}55%,100%{left:135%}}
-.big-btn:active{transform:scale(.965)}
-
-.sub-btn{
-  width:100%;max-width:340px;margin-top:11px;padding:15px 22px;
-  border-radius:19px;font-size:15px;font-weight:700;letter-spacing:1px;
-  background:var(--glass);border:1px solid var(--line);color:var(--ink2);
-  transition:.18s;
-}
-.sub-btn:active{transform:scale(.97);background:var(--glass2)}
-.sub-btn .k{display:block;font-size:11px;color:var(--ink3);margin-top:4px;
-  letter-spacing:0;font-weight:400}
-
-.foot{margin-top:30px;font-size:11.5px;color:var(--ink3);letter-spacing:.4px;line-height:1.9}
-
-/* ============ 地图 ============ */
-.bar{display:flex;align-items:center;gap:12px;padding:2px 0 12px;flex:0 0 auto}
-.bar .back{width:40px;height:40px;flex:0 0 auto;border-radius:13px;
-  background:var(--glass);border:1px solid var(--line);display:grid;place-items:center;
-  font-size:17px;transition:.16s}
-.bar .back:active{transform:scale(.9);background:var(--glass2)}
-.bar h2{font-size:19px;font-weight:800;letter-spacing:1px;flex:1}
-.bar .tot{font-size:12px;font-weight:800;color:var(--gold);white-space:nowrap;
-  background:rgba(255,197,61,.12);border:1px solid rgba(255,197,61,.3);
-  padding:6px 11px;border-radius:999px}
-
-.scroller{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;
-  padding:4px 2px 18px;-webkit-overflow-scrolling:touch}
-.scroller::-webkit-scrollbar{width:0}
-
-.node{width:100%;display:flex;align-items:center;gap:13px;padding:14px 15px;
-  border-radius:19px;background:var(--glass);border:1px solid var(--line);
-  margin-bottom:10px;text-align:left;position:relative;overflow:hidden;
-  transition:transform .16s,background .18s,border-color .18s}
-.node:active{transform:scale(.975)}
-.node.done{background:rgba(37,224,174,.09);border-color:rgba(37,224,174,.3)}
-.node.next{background:linear-gradient(100deg,rgba(123,92,255,.26),rgba(37,224,174,.12));
-  border-color:rgba(123,92,255,.6);animation:npulse 2.6s ease-in-out infinite}
-@keyframes npulse{
-  0%,100%{box-shadow:0 0 0 1px rgba(123,92,255,.25),0 8px 28px rgba(123,92,255,.16)}
-  50%{box-shadow:0 0 0 1px rgba(123,92,255,.55),0 8px 40px rgba(123,92,255,.42)}
-}
-.node.lock{opacity:.4}
-.node.boss{background:linear-gradient(100deg,rgba(255,84,112,.22),rgba(255,95,143,.1));
-  border-color:rgba(255,84,112,.45)}
-.node.boss.next{animation:bpulse 2s ease-in-out infinite}
-@keyframes bpulse{
-  0%,100%{box-shadow:0 0 0 1px rgba(255,84,112,.3),0 8px 30px rgba(255,84,112,.2)}
-  50%{box-shadow:0 0 0 1px rgba(255,84,112,.75),0 8px 46px rgba(255,84,112,.55)}
-}
-.node .idx{width:46px;height:46px;flex:0 0 auto;border-radius:14px;
-  display:grid;place-items:center;font-size:19px;font-weight:900;
-  background:rgba(255,255,255,.07);border:1px solid var(--line)}
-.node.done .idx{background:rgba(37,224,174,.2);border-color:rgba(37,224,174,.4)}
-.node.boss .idx{background:rgba(255,84,112,.2);border-color:rgba(255,84,112,.42)}
-.node .bd{flex:1;min-width:0}
-.node .nm{display:block;font-size:16px;font-weight:800;letter-spacing:.5px;margin-bottom:4px}
-.node .mt{display:block;font-size:11.5px;color:var(--ink3)}
-.node .mt .d{margin:0 6px;opacity:.5}
-.stars{display:flex;gap:3px;font-size:14px;flex:0 0 auto}
-.stars i{font-style:normal;opacity:.16}
-.stars i.on{opacity:1;filter:drop-shadow(0 0 6px rgba(255,197,61,.75))}
-.node .best{position:absolute;right:15px;bottom:10px;font-size:10.5px;
-  color:var(--gold);opacity:.8}
-
-/* ============ 游戏 ============ */
-.hud{display:flex;align-items:center;gap:9px;flex:0 0 auto;padding-bottom:9px}
-.hud .pill{font-size:12px;font-weight:800;color:var(--ink2);
-  background:var(--glass);border:1px solid var(--line);
-  padding:7px 12px;border-radius:999px;white-space:nowrap}
-.hud .pill b{color:#b9a3ff}
-.hud .sc{margin-left:auto;font-size:17px;font-weight:900;color:var(--gold);
-  font-variant-numeric:tabular-nums;transition:transform .18s}
-.hud .sc.pop{transform:scale(1.3)}
-
-/* 时间条 */
-.tbar{flex:0 0 auto;height:12px;border-radius:999px;background:rgba(255,255,255,.07);
-  overflow:hidden;position:relative;margin-bottom:4px;
-  border:1px solid rgba(255,255,255,.08)}
-.tbar i{display:block;height:100%;width:100%;border-radius:999px;
-  background:linear-gradient(90deg,#25e0ae,#5fd0ff);transition:background .4s}
-.tbar.warn i{background:linear-gradient(90deg,#ffc53d,#ff9a5c)}
-.tbar.danger i{background:linear-gradient(90deg,#ff5470,#ff5f8f);
-  animation:tblink .55s ease-in-out infinite}
-@keyframes tblink{0%,100%{opacity:1}50%{opacity:.45}}
-.tbar .txt{position:absolute;inset:0;display:grid;place-items:center;
-  font-size:9px;font-weight:900;letter-spacing:.1em;color:#07051a;
-  text-shadow:0 1px 0 rgba(255,255,255,.35)}
-
-/* 目标 / BOSS */
-.goal{flex:0 0 auto;display:flex;align-items:center;gap:9px;
-  padding:9px 12px;margin:7px 0;border-radius:14px;
-  background:var(--glass);border:1px solid var(--line);font-size:12px;color:var(--ink2)}
-.goal .gl{font-weight:800;white-space:nowrap}
-.goal .gp{flex:1;height:7px;border-radius:999px;background:rgba(255,255,255,.09);overflow:hidden}
-.goal .gp i{display:block;height:100%;border-radius:999px;
-  background:linear-gradient(90deg,#7b5cff,#25e0ae);transition:width .4s cubic-bezier(.3,1,.4,1)}
-.goal.boss{background:rgba(255,84,112,.1);border-color:rgba(255,84,112,.3)}
-.goal.boss .gp i{background:linear-gradient(90deg,#ff5470,#ff5f8f,#ffc53d)}
-.goal .bf{font-size:19px;line-height:1;animation:bbreathe 2.4s ease-in-out infinite}
-@keyframes bbreathe{0%,100%{transform:scale(1)}50%{transform:scale(1.14)}}
-.goal .bf.hurt{animation:bhurt .4s ease}
-@keyframes bhurt{
-  0%,100%{transform:scale(1)}
-  25%{transform:scale(1.5) rotate(-12deg);filter:brightness(3)}
-  60%{transform:scale(.86) rotate(8deg)}
-}
-
-/* 棋盘 */
-#boardWrap{flex:1;min-height:0;position:relative;margin:4px 0;display:flex;
-  align-items:center;justify-content:center}
+/* ---------- 棋盘 ---------- */
+#boardTop{display:flex;align-items:center;justify-content:space-between;
+  padding:2px 4px 8px;font-size:13px;color:#5b7168}
+#boardTop .tip{font-weight:700}
 #board{
-  position:relative;width:100%;height:100%;
-  border-radius:20px;
-  background:rgba(255,255,255,.028);
-  border:1px solid rgba(255,255,255,.07);
-  overflow:hidden;
+  position:relative;width:100%;border-radius:18px;overflow:hidden;
+  background:rgba(255,255,255,.6);
+  box-shadow:0 10px 30px rgba(80,125,100,.14),inset 0 0 0 1px rgba(255,255,255,.9);
+  aspect-ratio:var(--cols) / var(--rows);
 }
+.tile{position:absolute;left:0;top:0;padding:3px;will-change:transform;
+  transition:transform .3s cubic-bezier(.3,1.25,.5,1)}
+.tile .face{width:100%;height:100%;border-radius:12px;display:flex;align-items:center;
+  justify-content:center;text-align:center;padding:3px;line-height:1.08;font-weight:800;
+  overflow-wrap:anywhere;word-break:break-word;
+  transition:transform .16s ease,box-shadow .16s ease,opacity .2s ease}
+.tile.en .face{background:linear-gradient(180deg,#eaf3ff,#d6e8ff);border:2px solid #b6d3f5;color:#1d4e7a}
+.tile.zh .face{background:linear-gradient(180deg,#fff2f5,#ffe1e9);border:2px solid #f7c2cf;color:#8a2b46}
+.tile.sel .face{transform:scale(1.07);box-shadow:0 0 0 3px #6ed39b,0 7px 16px rgba(60,120,90,.26)}
+.tile.bad .face{animation:shake .42s ease}
+.tile.hintpair .face{box-shadow:0 0 0 3px #ffce54;animation:breathe 1.1s ease-in-out infinite}
+.tile.pop .face{transform:scale(1.3);opacity:0}
+.tile.star .face{position:relative}
+.tile.star .face::after{content:"✨";position:absolute;top:1px;right:3px;font-size:11px}
+.tile.bomb .face{position:relative;box-shadow:0 0 0 2px #ffb09a}
+.tile.bomb .face::after{content:"💥";position:absolute;top:1px;right:3px;font-size:11px}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}
+  40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
+@keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
 
-.tile{
-  position:absolute;left:0;top:0;
-  padding:3px;
-  transition:transform .26s cubic-bezier(.3,1.25,.5,1), opacity .22s;
-  will-change:transform;
-  z-index:1;
-}
-.tile .face{
-  width:100%;height:100%;border-radius:13px;
-  display:flex;align-items:center;justify-content:center;
-  text-align:center;padding:5px;line-height:1.14;
-  font-weight:800;letter-spacing:.2px;word-break:break-word;
-  border:1.5px solid transparent;
-  box-shadow:0 3px 10px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.16);
-  transition:transform .16s,box-shadow .2s,border-color .2s,filter .2s;
-}
-.tile.en .face{
-  background:linear-gradient(165deg,var(--en-a),var(--en-b));
-  color:#fff;
-  font-family:ui-monospace,"Cascadia Mono",Consolas,monospace;
-  border-color:rgba(255,255,255,.24);
-}
-.tile.zh .face{
-  background:linear-gradient(165deg,var(--zh-a),var(--zh-b));
-  color:#fff;border-color:rgba(255,255,255,.24);
-}
+#comboTag{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%) scale(.6);
+  font-size:30px;font-weight:900;color:#e08a2e;opacity:0;pointer-events:none;
+  text-shadow:0 3px 0 #fff,0 6px 18px rgba(200,140,60,.35);white-space:nowrap}
+#comboTag.show{animation:cpop .75s ease-out}
+@keyframes cpop{0%{opacity:0;transform:translate(-50%,-50%) scale(.5)}
+  35%{opacity:1;transform:translate(-50%,-50%) scale(1.14)}
+  70%{opacity:1;transform:translate(-50%,-50%) scale(1)}
+  100%{opacity:0;transform:translate(-50%,-58%) scale(1)}}
 
-.tile.sel{z-index:6}
-.tile.sel .face{
-  transform:scale(1.09);
-  border-color:#fff;
-  box-shadow:0 0 0 3px rgba(255,255,255,.35),0 0 28px rgba(255,255,255,.6);
-  filter:brightness(1.22);
-}
+/* ---------- 花园 ---------- */
+.gcard{background:rgba(255,255,255,.72);border:1px solid rgba(160,200,175,.4);
+  border-radius:18px;padding:12px;box-shadow:0 8px 22px rgba(85,130,105,.1);margin-bottom:12px}
+.gcard h3{margin:0 0 8px;font-size:14px;color:#43695a;display:flex;align-items:center;gap:6px}
+.gcard h3 .n{font-weight:600;color:#7c9488;font-size:12px;margin-left:auto}
+#lawn{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;
+  background:linear-gradient(180deg,#dff2e2,#cfeacf);border-radius:14px;padding:8px;
+  box-shadow:inset 0 2px 10px rgba(90,150,110,.16)}
+.plot{aspect-ratio:1;border-radius:12px;border:2px dashed rgba(120,175,140,.45);
+  background:rgba(255,255,255,.34);display:flex;align-items:center;justify-content:center;
+  font-size:26px;line-height:1;cursor:pointer;padding:0;position:relative;
+  transition:transform .16s,background .16s}
+.plot:active{transform:scale(.93)}
+.plot.filled{border-style:solid;border-color:rgba(255,255,255,.7);
+  background:rgba(255,255,255,.5)}
+.plot .sw{display:block;animation:sway 3.4s ease-in-out infinite;transform-origin:50% 85%}
+@keyframes sway{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
+.plot .plus{font-size:16px;color:#8fbfa2;font-weight:800}
 
-.tile.hintpair .face{animation:hpair 1.05s ease-in-out infinite}
-@keyframes hpair{
-  0%,100%{box-shadow:0 0 0 0 rgba(255,255,255,0),0 3px 10px rgba(0,0,0,.3)}
-  50%{box-shadow:0 0 0 3px rgba(255,255,255,.55),0 0 26px rgba(255,255,255,.7)}
-}
+.shoprow{display:flex;align-items:center;gap:10px;padding:8px 6px;border-radius:12px}
+.shoprow+.shoprow{border-top:1px dashed rgba(150,190,165,.32)}
+.shoprow .em{font-size:25px;width:34px;text-align:center;flex:0 0 auto}
+.shoprow .nm{font-weight:700;font-size:14px;flex:1;min-width:0}
+.shoprow .nm small{display:block;font-weight:500;color:#8aa79a;font-size:11px}
+.shoprow .go{border:0;border-radius:999px;padding:7px 14px;font-weight:800;font-size:13px;
+  background:linear-gradient(180deg,#68d391,#48bb78);color:#fff;cursor:pointer;
+  box-shadow:0 3px 10px rgba(72,187,120,.35);flex:0 0 auto}
+.shoprow .go:active{transform:scale(.95)}
+.shoprow .go.no{background:#e6ece8;color:#9db3a8;box-shadow:none}
+.shoprow .go.have{background:rgba(255,255,255,.9);color:#48a06e;border:1px solid #a8dcc0}
 
-.tile.bad .face{
-  animation:tbad .42s ease;
-  border-color:#ff5470!important;
-  box-shadow:0 0 22px rgba(255,84,112,.85);
-}
-@keyframes tbad{
-  0%,100%{transform:translateX(0)}
-  22%{transform:translateX(-6px) rotate(-3deg)}
-  58%{transform:translateX(6px) rotate(3deg)}
-  82%{transform:translateX(-3px)}
-}
-.tile.pop{pointer-events:none;z-index:5}
-.tile.pop .face{animation:tpop .34s cubic-bezier(.3,1.3,.5,1) forwards}
-@keyframes tpop{
-  0%{transform:scale(1);filter:brightness(1)}
-  40%{transform:scale(1.24);filter:brightness(2.6)}
-  100%{transform:scale(.15) rotate(28deg);opacity:0;filter:brightness(3)}
-}
-.tile.spawn{animation:tspawn .38s cubic-bezier(.34,1.5,.6,1)}
-@keyframes tspawn{
-  0%{opacity:0;transform:translateY(-38px) scale(.7)}
-  100%{opacity:1}
-}
+/* ---------- 图鉴 ---------- */
+.wgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:7px}
+.wcard{background:rgba(255,255,255,.72);border:1px solid rgba(165,200,180,.4);
+  border-radius:12px;padding:8px 10px;cursor:pointer;overflow:hidden}
+.wcard:active{transform:scale(.97)}
+.wcard .e{font-weight:800;font-size:13px;color:#1d4e7a;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis}
+.wcard .z{font-size:12px;color:#8a2b46;margin-top:2px}
+.wcard.locked{opacity:.34}
+.wcard.locked .e,.wcard.locked .z{color:#7d8f87}
 
-/* 角标 */
-.tile .flag{
-  position:absolute;top:-3px;right:1px;font-size:15px;line-height:1;
-  filter:drop-shadow(0 2px 5px rgba(0,0,0,.6));
-  animation:flagbob 1.5s ease-in-out infinite;
-}
-@keyframes flagbob{0%,100%{transform:translateY(0) rotate(-6deg)}50%{transform:translateY(-3px) rotate(6deg)}}
-.tile .flag.time{filter:drop-shadow(0 0 7px rgba(37,224,174,.95)) drop-shadow(0 2px 4px rgba(0,0,0,.6))}
-.tile .flag.bolt{filter:drop-shadow(0 0 7px rgba(255,197,61,.95)) drop-shadow(0 2px 4px rgba(0,0,0,.6))}
-.tile .flag.bomb{filter:drop-shadow(0 0 7px rgba(255,84,112,.95)) drop-shadow(0 2px 4px rgba(0,0,0,.6))}
+/* ---------- 底部标签 ---------- */
+#tabs{flex:0 0 auto;display:flex;gap:6px;padding:6px 12px calc(env(safe-area-inset-bottom,0px) + 8px)}
+#tabs button{flex:1;border:0;border-radius:14px;padding:9px 4px 7px;background:transparent;
+  color:#84a094;font-size:11px;font-weight:700;cursor:pointer;line-height:1.5}
+#tabs button .i{display:block;font-size:19px;line-height:1.15;filter:grayscale(.6);opacity:.7}
+#tabs button.on{background:rgba(255,255,255,.85);color:#3d7a5e;
+  box-shadow:0 4px 14px rgba(85,130,105,.14)}
+#tabs button.on .i{filter:none;opacity:1}
+#tabs button:active{transform:scale(.96)}
 
-/* 连击 */
-.combo{
-  position:fixed;left:50%;top:31%;z-index:60;pointer-events:none;
-  transform:translate(-50%,-50%) scale(.4);opacity:0;
-  font-size:50px;font-weight:900;letter-spacing:-2px;white-space:nowrap;
-  background:linear-gradient(180deg,#fff,var(--gold));
-  -webkit-background-clip:text;background-clip:text;color:transparent;
-  filter:drop-shadow(0 4px 22px rgba(255,197,61,.9));
-}
-.combo.go{animation:cpop .78s cubic-bezier(.2,1.4,.4,1) forwards}
-@keyframes cpop{
-  0%{opacity:0;transform:translate(-50%,-50%) scale(.3) rotate(-10deg)}
-  34%{opacity:1;transform:translate(-50%,-50%) scale(1.25) rotate(3deg)}
-  62%{transform:translate(-50%,-50%) scale(1) rotate(0)}
-  100%{opacity:0;transform:translate(-50%,-66%) scale(.9)}
-}
+/* ---------- 浮层 ---------- */
+.ovl{position:fixed;inset:0;background:rgba(38,58,48,.42);backdrop-filter:blur(3px);
+  display:none;align-items:flex-end;justify-content:center;z-index:50;padding:0}
+.ovl.on{display:flex}
+.sheet{width:100%;max-width:540px;max-height:82vh;overflow-y:auto;
+  background:#fbfdfb;border-radius:22px 22px 0 0;
+  padding:16px 16px calc(env(safe-area-inset-bottom,0px) + 18px);
+  box-shadow:0 -12px 40px rgba(40,70,55,.24);animation:up .26s cubic-bezier(.3,1.2,.5,1)}
+@keyframes up{from{transform:translateY(30px);opacity:.4}to{transform:none;opacity:1}}
+.sheet h2{margin:0 0 4px;font-size:17px}
+.sheet .sub{color:#82a094;font-size:12.5px;margin-bottom:12px}
+.sheet .row{display:flex;align-items:center;gap:10px;padding:9px 0;font-size:14px}
+.sheet .row+.row{border-top:1px solid rgba(160,200,180,.28)}
+.sheet .row .lbl{flex:1;font-weight:700}
+.picks{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.pick{aspect-ratio:1;border-radius:14px;border:2px solid rgba(160,200,180,.5);
+  background:#fff;font-size:27px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+.pick.on{border-color:#48bb78;box-shadow:0 0 0 3px rgba(72,187,120,.25)}
+.pick:active{transform:scale(.94)}
+.seg{display:flex;gap:6px}
+.seg button{flex:1;border:1px solid rgba(160,200,180,.55);background:#fff;border-radius:11px;
+  padding:8px 0;font-weight:700;font-size:13px;color:#5b7168;cursor:pointer}
+.seg button.on{background:#48bb78;border-color:#48bb78;color:#fff}
+.danger{width:100%;margin-top:14px;border:1px solid #f0b8b8;background:#fff5f5;color:#c05656;
+  border-radius:12px;padding:11px;font-weight:800;font-size:13.5px;cursor:pointer}
 
-.fly{position:fixed;z-index:58;pointer-events:none;font-size:20px;font-weight:900;
-  color:#7dffd4;text-shadow:0 2px 15px rgba(37,224,174,.9);white-space:nowrap}
-.fly.minus{color:#ff9db0;text-shadow:0 2px 15px rgba(255,84,112,.9)}
+#toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 62px);
+  transform:translate(-50%,-14px);background:rgba(44,66,55,.94);color:#fff;
+  padding:10px 18px;border-radius:999px;font-size:13.5px;font-weight:700;
+  opacity:0;pointer-events:none;transition:.26s;z-index:80;max-width:88vw;text-align:center;
+  box-shadow:0 8px 24px rgba(30,60,45,.3)}
+#toast.on{opacity:1;transform:translate(-50%,0)}
 
-#vig{position:fixed;inset:0;z-index:56;pointer-events:none;opacity:0;
-  background:radial-gradient(110% 78% at 50% 50%,transparent 40%,rgba(255,84,112,.52) 100%);
-  transition:opacity .16s}
-#vig.on{opacity:1}
-
-.conf{position:fixed;width:11px;height:11px;z-index:57;pointer-events:none;border-radius:2px}
-
-/* 教学条 */
-#teach{
-  position:fixed;left:50%;bottom:calc(var(--sb) + 16px);z-index:70;
-  transform:translate(-50%,18px);pointer-events:none;
-  background:rgba(16,13,44,.96);border:1px solid var(--line2);
-  border-radius:999px;padding:11px 22px;font-size:14px;
-  opacity:0;transition:opacity .26s,transform .26s;
-  max-width:90vw;text-align:center;box-shadow:0 10px 34px rgba(0,0,0,.6)}
-#teach.on{opacity:1;transform:translate(-50%,0)}
-#teach b{color:#7dffd4}
-#teach em{color:#ff9db0;font-style:normal;font-weight:800}
-
-/* 弹层 */
-.modal{position:fixed;inset:0;z-index:100;display:flex;align-items:center;
-  justify-content:center;padding:18px;background:rgba(5,4,16,.87);
-  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
-  opacity:0;visibility:hidden;transition:opacity .28s,visibility .28s}
-.modal.on{opacity:1;visibility:visible}
-.card{width:100%;max-width:400px;max-height:88vh;overflow-y:auto;
-  background:linear-gradient(175deg,rgba(255,255,255,.13),rgba(255,255,255,.045));
-  border:1px solid var(--line2);border-radius:26px;padding:28px 22px 22px;
-  text-align:center;box-shadow:0 26px 70px rgba(0,0,0,.65);
-  transform:translateY(20px) scale(.95);
-  transition:transform .4s cubic-bezier(.34,1.5,.64,1)}
-.modal.on .card{transform:translateY(0) scale(1)}
-.card::-webkit-scrollbar{width:0}
-.card .em{font-size:54px;line-height:1;margin-bottom:12px;display:block}
-.card h3{font-size:24px;font-weight:900;letter-spacing:1.5px;margin-bottom:8px}
-.card .desc{font-size:14px;color:var(--ink2);line-height:1.75;margin-bottom:18px}
-.card .desc b{color:#7dffd4}
-.card .desc em{color:#ff9db0;font-style:normal;font-weight:800}
-
-.rstars{display:flex;justify-content:center;gap:12px;margin:4px 0 18px}
-.rstars i{font-style:normal;font-size:42px;opacity:.18;transform:scale(.4)}
-.rstars i.on{opacity:1;animation:spop .58s cubic-bezier(.34,1.7,.5,1) forwards;
-  filter:drop-shadow(0 0 13px rgba(255,197,61,.9))}
-@keyframes spop{
-  0%{transform:scale(.3) rotate(-40deg);opacity:0}
-  60%{transform:scale(1.35) rotate(11deg);opacity:1}
-  100%{transform:scale(1) rotate(0);opacity:1}
-}
-
-.srow{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:18px}
-.srow .c{background:rgba(255,255,255,.05);border:1px solid var(--line);
-  border-radius:13px;padding:12px 5px}
-.srow .c .v{font-size:20px;font-weight:900;color:#7dffd4;font-variant-numeric:tabular-nums}
-.srow .c .l{font-size:10.5px;color:var(--ink3);margin-top:4px}
-
-.cbtn{width:100%;padding:15px;border-radius:17px;font-size:16px;font-weight:900;
-  letter-spacing:2px;background:linear-gradient(120deg,#7b5cff,#25e0ae);
-  color:#07051a;margin-bottom:9px;box-shadow:0 8px 26px rgba(123,92,255,.4);
-  transition:transform .16s}
-.cbtn:active{transform:scale(.97)}
-.cbtn.ghost{background:var(--glass);border:1px solid var(--line);color:var(--ink2);
-  box-shadow:none;font-weight:700}
-.cbtn.ghost:active{background:var(--glass2)}
-
-/* 单词回顾 */
-.rev{display:flex;flex-direction:column;gap:6px;margin-bottom:16px;
-  max-height:150px;overflow-y:auto;text-align:left}
-.rev::-webkit-scrollbar{width:0}
-.rev .rw{display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.045);
-  border:1px solid var(--line);border-radius:11px;padding:8px 11px;font-size:13px}
-.rev .rw .e{font-weight:800;min-width:92px;color:#9db4ff;
-  font-family:ui-monospace,Consolas,monospace}
-.rev .rw .z{color:var(--ink2);flex:1}
-.rev .rw .s{width:27px;height:27px;border-radius:9px;flex:0 0 auto;
-  background:rgba(255,255,255,.08);border:1px solid var(--line);
-  display:grid;place-items:center;font-size:12px}
-.rev .rw .s:active{background:rgba(123,92,255,.35)}
-
-.final-name{font-size:29px;font-weight:900;letter-spacing:1px;margin:2px 0 10px;
-  background:linear-gradient(100deg,#ff9ec4,#ffd6e8 45%,#ffc53d);
-  -webkit-background-clip:text;background-clip:text;color:transparent}
-.note{font-size:11.5px;color:var(--ink3);margin-top:12px;line-height:1.8}
-
-.howto{text-align:left;font-size:13.5px;line-height:2;color:var(--ink2)}
-.howto b{color:#9db4ff}
-.howto em{color:#ff9db0;font-style:normal;font-weight:800}
-.howto .row{display:flex;gap:9px;align-items:flex-start;margin-bottom:9px}
-.howto .row .ic{font-size:19px;flex:0 0 auto;width:26px;text-align:center}
-
-@media (max-height:680px){
-  .mascot{font-size:48px;margin-bottom:10px}
-  .gift{margin-top:18px}
-  .big-btn{margin-top:20px;padding:16px}
-  .foot{margin-top:18px}
-  .card .em{font-size:44px}
-  .combo{font-size:42px}
-}
-@media (min-width:600px){
-  .sub-btn:hover{background:var(--glass2);color:var(--ink)}
-  .node:hover{background:var(--glass2)}
-  .cbtn.ghost:hover{background:var(--glass2)}
-}
-@media (prefers-reduced-motion:reduce){
-  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;
-    transition-duration:.06s!important}
-  .big-btn::after{display:none}
-}
+.fx{position:fixed;pointer-events:none;z-index:70;font-size:15px;font-weight:800;
+  color:#d69a2a;text-shadow:0 2px 0 #fff,0 4px 12px rgba(200,150,60,.35)}
+.pt{position:fixed;pointer-events:none;z-index:70;font-size:15px;line-height:1}
 </style>
 </head>
 <body>
+<div id="app">
 
-<div id="bg"></div>
-<div id="vig"></div>
-
-<!-- ================= 首页 ================= -->
-<div class="screen on" id="home">
-  <div class="wrap">
-    <div class="mascot">🧩</div>
-    <h1 class="logo">单词消消乐</h1>
-    <div class="logo-sub">Word Crush · CET-4</div>
-
-    <div class="gift">
-      送给<span class="nm" id="homeName">你</span>
-      <span class="tag" id="homeTag">把四级单词点成一对一对的方块</span>
-    </div>
-
-    <button class="big-btn" id="btnPlay">开 始 消 除</button>
-    <button class="sub-btn" id="btnMap">关卡地图<span class="k" id="mapSummary">尚未启程</span></button>
-    <button class="sub-btn" id="btnHow">怎么玩 ?</button>
-
-    <div class="foot">
-      进度自动保存在本机 · 随时可以关掉离开
-    </div>
+  <div id="hud">
+    <div class="stat sun">☀️ <b id="hudSun">0</b></div>
+    <div class="stat cmb off" id="hudCmbWrap">🔥 <b id="hudCmb">0</b></div>
+    <div class="sp"></div>
+    <button class="iconbtn" id="btnSet" aria-label="设置">⚙️</button>
   </div>
+
+  <main>
+    <!-- ===== 消除 ===== -->
+    <section class="scr on" id="scrPlay">
+      <div id="boardTop">
+        <span class="tip" id="playTip">点一个蓝块，再点它对应的粉块</span>
+        <span id="playCount">已消 0 对</span>
+      </div>
+      <div id="board"><div id="comboTag"></div></div>
+    </section>
+
+    <!-- ===== 花园 ===== -->
+    <section class="scr" id="scrGarden">
+      <div class="gcard">
+        <h3>🌿 我的花园 <span class="n" id="gardenCount"></span></h3>
+        <div id="lawn"></div>
+      </div>
+      <div class="gcard">
+        <h3>🌱 种子铺 <span class="n" id="shopHint"></span></h3>
+        <div id="shop"></div>
+      </div>
+    </section>
+
+    <!-- ===== 图鉴 ===== -->
+    <section class="scr" id="scrDex">
+      <div class="gcard">
+        <h3>📖 单词图鉴 <span class="n" id="dexCount"></span></h3>
+        <div class="wgrid" id="dexGrid"></div>
+      </div>
+    </section>
+  </main>
+
+  <nav id="tabs">
+    <button class="on" data-scr="play"><span class="i">🎮</span>消除</button>
+    <button data-scr="garden"><span class="i">🌷</span>花园</button>
+    <button data-scr="dex"><span class="i">📖</span>图鉴</button>
+  </nav>
 </div>
 
-<!-- ================= 地图 ================= -->
-<div class="screen" id="map">
-  <div class="wrap">
-    <div class="bar">
-      <button class="back" id="mapBack">←</button>
-      <h2>关卡地图</h2>
-      <div class="tot" id="mapScore">⭐ 0 / 36</div>
+<!-- 种什么 -->
+<div class="ovl" id="ovlPick"><div class="sheet">
+  <h2>种点什么</h2>
+  <div class="sub">解锁过的都能随便种，不花阳光</div>
+  <div class="picks" id="pickGrid"></div>
+  <button class="danger" id="pickClear">🗑 拔掉这一格</button>
+</div></div>
+
+<!-- 设置 -->
+<div class="ovl" id="ovlSet"><div class="sheet">
+  <h2>设置</h2>
+  <div class="sub">随便改，自动保存</div>
+
+  <div class="row"><span class="lbl">棋盘大小</span>
+    <div class="seg" id="segSize">
+      <button data-c="4" data-r="5">小</button>
+      <button data-c="4" data-r="6">中</button>
+      <button data-c="5" data-r="6">大</button>
     </div>
-    <div class="scroller"><div id="road"></div></div>
   </div>
-</div>
-
-<!-- ================= 游戏 ================= -->
-<div class="screen" id="play">
-  <div class="wrap">
-
-    <div class="hud">
-      <div class="pill" id="hudLv">第 <b>1</b> 关</div>
-      <div class="pill" id="hudCombo">连击 <b>0</b></div>
-      <div class="sc" id="hudSc">0</div>
+  <div class="row"><span class="lbl">背景音乐</span>
+    <div class="seg" id="segMusic">
+      <button data-v="1">开</button><button data-v="0">关</button>
     </div>
-
-    <div class="tbar" id="tbar">
-      <i id="tfill"></i>
-      <div class="txt" id="ttxt">60s</div>
-    </div>
-
-    <div class="goal" id="goal">
-      <span class="gl" id="goalLbl">目标</span>
-      <span class="gp"><i id="goalBar"></i></span>
-      <span class="gl" id="goalNum">0/12</span>
-    </div>
-
-    <div id="boardWrap"><div id="board"></div></div>
-
-    <div class="hud" style="padding-top:8px;padding-bottom:0">
-      <div class="pill" id="hudPairs">已消除 <b>0</b> 对</div>
-      <div class="pill" style="margin-left:auto" id="hudErr">失误 <b>0</b></div>
-    </div>
-
   </div>
-</div>
-
-<div class="combo" id="comboEl"></div>
-<div id="teach"></div>
-
-<!-- ================= 过关 ================= -->
-<div class="modal" id="mWin">
-  <div class="card">
-    <span class="em" id="winEm">🎉</span>
-    <h3 id="winTitle">过关！</h3>
-    <div class="desc" id="winDesc"></div>
-    <div class="rstars" id="winStars"><i>★</i><i>★</i><i>★</i></div>
-    <div class="srow">
-      <div class="c"><div class="v" id="wSc">0</div><div class="l">得分</div></div>
-      <div class="c"><div class="v" id="wPairs">0</div><div class="l">消除对数</div></div>
-      <div class="c"><div class="v" id="wCombo">0</div><div class="l">最高连击</div></div>
+  <div class="row"><span class="lbl">音效</span>
+    <div class="seg" id="segSfx">
+      <button data-v="1">开</button><button data-v="0">关</button>
     </div>
-    <div class="rev" id="wRev"></div>
-    <button class="cbtn" id="winNext">下一关 →</button>
-    <button class="cbtn ghost" id="winRetry">再玩一次</button>
-    <button class="cbtn ghost" id="winMap">回到地图</button>
   </div>
-</div>
-
-<!-- ================= 失败 ================= -->
-<div class="modal" id="mLose">
-  <div class="card">
-    <span class="em">⏳</span>
-    <h3 id="loseTitle">时间到</h3>
-    <div class="desc" id="loseDesc"></div>
-    <div class="rev" id="lRev"></div>
-    <button class="cbtn" id="loseRetry">再来一次</button>
-    <button class="cbtn ghost" id="loseMap">回到地图</button>
-  </div>
-</div>
-
-<!-- ================= 全通关 ================= -->
-<div class="modal" id="mFinal">
-  <div class="card">
-    <span class="em">🏆</span>
-    <h3>全部通关！</h3>
-    <div class="final-name" id="finalName">你</div>
-    <div class="desc" id="finalDesc"></div>
-    <div class="srow">
-      <div class="c"><div class="v" id="fStars">0</div><div class="l">总星数</div></div>
-      <div class="c"><div class="v" id="fScore">0</div><div class="l">累计得分</div></div>
-      <div class="c"><div class="v" id="fWords">0</div><div class="l">见过的词</div></div>
+  <div class="row"><span class="lbl">点英文块自动朗读</span>
+    <div class="seg" id="segTts">
+      <button data-v="1">开</button><button data-v="0">关</button>
     </div>
-    <button class="cbtn" id="finalMap">回到地图</button>
   </div>
-</div>
 
-<!-- ================= 玩法 ================= -->
-<div class="modal" id="mHow">
-  <div class="card">
-    <span class="em">📖</span>
-    <h3>怎么玩</h3>
-    <div class="howto">
-      <div class="row"><span class="ic">👆</span><span>
-        点一个<b>蓝色英文块</b>，再点它对应的<b>粉色中文块</b>，配对就消掉</span></div>
-      <div class="row"><span class="ic">🔊</span><span>
-        点到英文块会自动<b>朗读</b>它，边玩边磨耳朵</span></div>
-      <div class="row"><span class="ic">⏱️</span><span>
-        消对了<b>加时间</b>，配错了<em>扣时间</em>，时间见底就结束</span></div>
-      <div class="row"><span class="ic">🔥</span><span>
-        不失误地连着消，<b>连击倍率</b>越来越高</span></div>
-      <div class="row"><span class="ic">💣</span><span>
-        带角标的方块是<b>特殊块</b>：💣炸一片 · ⏰加 8 秒 · ⚡再白送一对</span></div>
-      <div class="row"><span class="ic">👹</span><span>
-        BOSS 关不拼时间，每消一对砍它一刀</span></div>
-    </div>
-    <div class="note">不认识的词会记进"生词本"，过关后能回看</div>
-    <button class="cbtn" id="howClose" style="margin-top:16px">知道了</button>
-  </div>
-</div>
+  <button class="danger" id="btnReset">清空所有进度（重来）</button>
+</div></div>
+
+<div id="toast"></div>
 
 <script>
-"use strict";
-
 /* ==========================================================================
-   ⚙️ CONFIG
+   配置 —— 想改成别的名字/别的祝福语，改这里就行
    ========================================================================== */
 const CONFIG = {
   name: "超级071大王",
-  tagline: "把四级单词点成一对一对的方块",
-  finalMessage: "十二关全部消完了。<br>这些四级词，是你一个方块一个方块敲碎的 💥"
+  hello: "慢慢消，不着急 🌿",
+  footer: "这座花园是给你一个人种出来的"
 };
 
 /* ==========================================================================
-   四级词汇库（CET-4）
+   词库（四级）—— python 注入
    ========================================================================== */
-const CET4 = [
-["abandon","放弃"],["absorb","吸收"],["abstract","抽象的"],["academic","学术的"],
+const WORDS = [
+  ["abandon","放弃"],["absorb","吸收"],["abstract","抽象的"],["academic","学术的"],
 ["accelerate","加速"],["accompany","陪伴"],["accomplish","完成"],["accurate","准确的"],
 ["accuse","指控"],["acquire","获取"],["adapt","适应"],["adequate","适当的"],
 ["adjust","调整"],["admire","钦佩"],["adopt","采纳"],["advance","前进"],
@@ -703,148 +371,312 @@ const CET4 = [
 ["virtual","虚拟的"],["virtue","美德"],["vital","至关重要的"],["volume","体积；音量"],
 ["voluntary","自愿的"],["wander","漫步"],["warn","警告"],["witness","目击者"],
 ["worship","崇拜"],["yield","产生；屈服"]
-].map(([en, zh], i) => ({id:i, en, zh}));
+].map(([en, zh], i) => ({ id: i, en, zh }));
 
 /* ==========================================================================
-   关卡
+   可解锁的东西
    ========================================================================== */
-const LEVELS = [
-  {n:1,  name:"热身",     cols:4, rows:5, time:65, goal:10, sp:0},
-  {n:2,  name:"顺手",     cols:4, rows:5, time:60, goal:12, sp:0},
-  {n:3,  name:"起风",     cols:4, rows:5, time:58, goal:13, sp:.07},
-  {n:4,  name:"炸弹怪",   cols:4, rows:5, time:62, boss:8,  sp:.10, icon:"💣"},
-  {n:5,  name:"阶梯",     cols:4, rows:6, time:62, goal:15, sp:.10},
-  {n:6,  name:"回声",     cols:4, rows:6, time:60, goal:16, sp:.12},
-  {n:7,  name:"暗流",     cols:4, rows:6, time:58, goal:17, sp:.14},
-  {n:8,  name:"夜枭",     cols:4, rows:6, time:66, boss:10, sp:.16, icon:"🦉"},
-  {n:9,  name:"密林",     cols:4, rows:7, time:64, goal:18, sp:.16},
-  {n:10, name:"深渊",     cols:4, rows:7, time:62, goal:19, sp:.18},
-  {n:11, name:"天梯",     cols:4, rows:7, time:60, goal:20, sp:.20},
-  {n:12, name:"终焉之龙", cols:4, rows:7, time:72, boss:12, sp:.22, icon:"🐉"}
+const DECOS = [
+  { id:"grass",  e:"🌱", n:"草芽",     c:0,    d:"花园的第一点绿" },
+  { id:"stone",  e:"🪨", n:"小石头",   c:8,    d:"随便一块，也好看" },
+  { id:"daisy",  e:"🌼", n:"雏菊",     c:16,   d:"最省阳光的小花" },
+  { id:"mush",   e:"🍄", n:"蘑菇",     c:28,   d:"雨后自己冒出来" },
+  { id:"tulip",  e:"🌷", n:"郁金香",   c:44,   d:"一开就是一排" },
+  { id:"clover", e:"🍀", n:"三叶草",   c:64,   d:"据说能找到第四片" },
+  { id:"wheat",  e:"🌾", n:"麦穗",     c:88,   d:"风一吹就晃" },
+  { id:"sun",    e:"🌻", n:"向日葵",   c:116,  d:"永远朝着有光那边" },
+  { id:"sakura", e:"🌸", n:"樱花枝",   c:150,  d:"开的时候最热闹" },
+  { id:"pot",    e:"🪴", n:"小盆栽",   c:190,  d:"放在窗台上那种" },
+  { id:"bamboo", e:"🎋", n:"许愿竹",   c:236,  d:"可以把愿望挂上去" },
+  { id:"rose",   e:"🌹", n:"玫瑰",     c:288,  d:"带刺，但好看" },
+  { id:"bee",    e:"🐝", n:"蜜蜂",     c:346,  d:"嗡嗡嗡，不是来找你的" },
+  { id:"butter", e:"🦋", n:"蝴蝶",     c:410,  d:"会停在花上一会儿" },
+  { id:"ladybug",e:"🐞", n:"瓢虫",     c:480,  d:"背上七个点" },
+  { id:"palm",   e:"🌴", n:"棕榈",     c:556,  d:"假装这里是海边" },
+  { id:"rabbit", e:"🐇", n:"兔子",     c:638,  d:"会偷偷啃你的花" },
+  { id:"tree",   e:"🌳", n:"大树",     c:726,  d:"能遮一整个下午的太阳" },
+  { id:"cat",    e:"🐈", n:"猫",       c:820,  d:"它想来就来，想走就走" },
+  { id:"house",  e:"🏡", n:"小木屋",   c:920,  d:"花园终于有房子了" },
+  { id:"fount",  e:"⛲", n:"喷泉",     c:1026, d:"水声很安静" },
+  { id:"rainbow",e:"🌈", n:"彩虹",     c:1138, d:"得等下过雨" }
 ];
-const TOTAL_LV = LEVELS.length;
-const MAX_STARS = TOTAL_LV * 3;
 
 /* ==========================================================================
    存档
    ========================================================================== */
-const KEY = "wordCrush.v1";
-const blank = () => ({unlocked:1, stars:{}, best:{}, total:0, seen:[], cleared:false});
-let save;
-try {
-  const raw = localStorage.getItem(KEY);
-  save = raw ? Object.assign(blank(), JSON.parse(raw)) : blank();
-  save.stars = save.stars || {}; save.best = save.best || {}; save.seen = save.seen || [];
-} catch (e) { save = blank(); }
-const persist = () => { try { localStorage.setItem(KEY, JSON.stringify(save)); } catch (e) {} };
+const SAVE_KEY = "sshy_v1";
+const PLOT_COLS = 5, PLOT_ROWS = 6, PLOTS = PLOT_COLS * PLOT_ROWS;
+
+const DEFAULTS = {
+  sun: 0, matches: 0, best: 0,
+  owned: { grass: true },
+  plots: new Array(PLOTS).fill(null),
+  seen: [],
+  cols: 4, rows: 6,
+  music: true, sfx: true, tts: true
+};
+
+let S = load();
+
+function load(){
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return JSON.parse(JSON.stringify(DEFAULTS));
+    const o = JSON.parse(raw);
+    const s = Object.assign(JSON.parse(JSON.stringify(DEFAULTS)), o);
+    if (!Array.isArray(s.plots) || s.plots.length !== PLOTS) {
+      const p = new Array(PLOTS).fill(null);
+      if (Array.isArray(s.plots)) for (let i = 0; i < Math.min(PLOTS, s.plots.length); i++) p[i] = s.plots[i];
+      s.plots = p;
+    }
+    if (!Array.isArray(s.seen)) s.seen = [];
+    return s;
+  } catch (e) {
+    return JSON.parse(JSON.stringify(DEFAULTS));
+  }
+}
+let saveTimer = null;
+function save(){
+  if (saveTimer) return;
+  saveTimer = setTimeout(() => {
+    saveTimer = null;
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch (e) {}
+  }, 260);
+}
+function saveNow(){
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch (e) {}
+}
 
 /* ==========================================================================
-   音效
+   小工具
    ========================================================================== */
-const Sfx = {
-  ctx:null, master:null, on:true, pad:null,
-  init(){
-    if (this.ctx) return;
+const $ = id => document.getElementById(id);
+const rnd = n => Math.floor(Math.random() * n);
+const pick = a => a[rnd(a.length)];
+function shuffled(a){
+  const b = a.slice();
+  for (let i = b.length - 1; i > 0; i--) { const j = rnd(i + 1); const t = b[i]; b[i] = b[j]; b[j] = t; }
+  return b;
+}
+function esc(s){
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+function buzz(p){
+  if (!navigator.vibrate) return;
+  try { navigator.vibrate(p); } catch (e) {}
+}
+
+let toastT = null;
+function toast(msg, ms){
+  const el = $("toast");
+  el.textContent = msg;
+  el.classList.add("on");
+  if (toastT) clearTimeout(toastT);
+  toastT = setTimeout(() => el.classList.remove("on"), ms || 1700);
+}
+
+/* ==========================================================================
+   声音 —— 全部实时合成，不加载任何文件
+   ========================================================================== */
+const Audio2 = {
+  ctx: null, master: null, wet: null, sfxGain: null, musicGain: null,
+  ready: false, started: false,
+
+  boot(){
+    if (this.ready) return true;
     const AC = window.AudioContext || window.webkitAudioContext;
-    if (!AC) { this.on = false; return; }
-    this.ctx = new AC();
-    this.master = this.ctx.createGain();
-    this.master.gain.value = .4;
-    this.master.connect(this.ctx.destination);
-  },
-  resume(){ if (this.ctx && this.ctx.state === "suspended") this.ctx.resume(); },
-  tone(f, o){
-    o = o || {};
-    if (!this.on || !this.ctx) return;
-    const t = this.ctx.currentTime + (o.delay || 0);
-    const osc = this.ctx.createOscillator(), g = this.ctx.createGain();
-    osc.type = o.type || "sine";
-    osc.frequency.setValueAtTime(f, t);
-    if (o.to) osc.frequency.exponentialRampToValueAtTime(o.to, t + (o.dur || .5));
-    const gain = o.gain == null ? .13 : o.gain;
-    g.gain.setValueAtTime(.0001, t);
-    g.gain.exponentialRampToValueAtTime(gain, t + .012);
-    g.gain.exponentialRampToValueAtTime(.0001, t + (o.dur || .5));
-    osc.connect(g); g.connect(this.master);
-    osc.start(t); osc.stop(t + (o.dur || .5) + .04);
-  },
-  noise(dur, gain, freq){
-    if (!this.on || !this.ctx) return;
-    dur = dur || .22; gain = gain || .1; freq = freq || 1100;
-    const t = this.ctx.currentTime;
-    const n = Math.floor(this.ctx.sampleRate * dur);
-    const buf = this.ctx.createBuffer(1, n, this.ctx.sampleRate);
-    const d = buf.getChannelData(0);
-    for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
-    const s = this.ctx.createBufferSource(); s.buffer = buf;
-    const f = this.ctx.createBiquadFilter();
-    f.type = "bandpass"; f.frequency.value = freq; f.Q.value = 1;
-    const g = this.ctx.createGain(); g.gain.value = gain;
-    s.connect(f); f.connect(g); g.connect(this.master); s.start(t);
-  },
-  SCALE:[523.25,587.33,659.25,783.99,880,1046.5,1174.66,1318.51,1567.98,1760,2093],
-  match(combo){
-    const n = this.SCALE[Math.min(combo, this.SCALE.length - 1)];
-    this.tone(n, {dur:.42, type:"triangle", gain:.15});
-    this.tone(n * 1.5, {dur:.3, type:"sine", gain:.05, delay:.02});
-    this.noise(.13, .05, 2400);
-  },
-  miss(){
-    this.tone(190, {dur:.3, type:"sawtooth", gain:.07, to:120});
-    this.tone(140, {dur:.34, type:"sine", gain:.08, delay:.02});
-  },
-  boom(){
-    this.tone(150, {dur:.42, type:"square", gain:.11, to:52});
-    this.noise(.42, .17, 480);
-    this.noise(.22, .1, 1800);
-  },
-  chime(){
-    [880, 1320, 1760].forEach((f, i) =>
-      this.tone(f, {dur:.5, type:"sine", gain:.1, delay:i * .06}));
-  },
-  spark(){
-    [1320, 1760, 2349].forEach((f, i) =>
-      this.tone(f, {dur:.34, type:"square", gain:.06, delay:i * .05}));
-  },
-  hurt(){
-    this.tone(300, {dur:.2, type:"square", gain:.09, to:110});
-    this.noise(.2, .12, 800);
-  },
-  tick(){ this.tone(1500, {dur:.05, type:"sine", gain:.05}); },
-  win(){ [523.25,659.25,783.99,1046.5,1318.51].forEach((f,i)=>
-    this.tone(f,{dur:.72,type:"triangle",gain:.13,delay:i*.1})); },
-  lose(){ [392,349.23,293.66,261.63].forEach((f,i)=>
-    this.tone(f,{dur:.58,type:"sine",gain:.11,delay:i*.13})); },
-  click(){ this.tone(1050, {dur:.05, type:"sine", gain:.04}); },
-  startPad(){
-    if (!this.ctx || this.pad || !this.on) return;
-    const t = this.ctx.currentTime;
-    const g = this.ctx.createGain(); g.gain.value = .0001;
-    const f = this.ctx.createBiquadFilter();
-    f.type = "lowpass"; f.frequency.value = 500;
-    g.connect(f); f.connect(this.master);
-    const oscs = [82.41, 123.47, 164.81, 246.94].map((hz, i) => {
-      const o = this.ctx.createOscillator();
-      o.type = i % 2 ? "sine" : "triangle";
-      o.frequency.value = hz * (1 + (i - 1.5) * .0018);
-      o.connect(g); o.start(t); return o;
-    });
-    const lfo = this.ctx.createOscillator(), lg = this.ctx.createGain();
-    lfo.frequency.value = .06; lg.gain.value = .016;
-    lfo.connect(lg); lg.connect(g.gain); lfo.start(t);
-    g.gain.exponentialRampToValueAtTime(.042, t + 5);
-    this.pad = {oscs, g, lfo};
-  },
-  stopPad(){
-    if (!this.pad || !this.ctx) return;
-    const {oscs, g, lfo} = this.pad, t = this.ctx.currentTime;
+    if (!AC) return false;
     try {
-      g.gain.cancelScheduledValues(t);
-      g.gain.setValueAtTime(g.gain.value, t);
-      g.gain.exponentialRampToValueAtTime(.0001, t + 1);
-      oscs.forEach(o => o.stop(t + 1.2)); lfo.stop(t + 1.2);
-    } catch (e) {}
-    this.pad = null;
+      const ctx = new AC();
+      this.ctx = ctx;
+      this.master = ctx.createGain();
+      this.master.gain.value = 0.9;
+      this.master.connect(ctx.destination);
+
+      // 混响：自己生成一段衰减噪声当 impulse response
+      const conv = ctx.createConvolver();
+      conv.buffer = this.makeIR(2.6, 2.6);
+      const wetG = ctx.createGain();
+      wetG.gain.value = 0.42;
+      this.wet = ctx.createGain();
+      this.wet.connect(conv);
+      conv.connect(wetG);
+      wetG.connect(this.master);
+
+      this.sfxGain = ctx.createGain();
+      this.sfxGain.gain.value = 0.5;
+      this.sfxGain.connect(this.master);
+      this.sfxGain.connect(this.wet);
+
+      this.musicGain = ctx.createGain();
+      this.musicGain.gain.value = 0.0001;
+      this.musicGain.connect(this.master);
+      this.musicGain.connect(this.wet);
+
+      this.ready = true;
+      return true;
+    } catch (e) { return false; }
+  },
+
+  makeIR(sec, decay){
+    const ctx = this.ctx, rate = ctx.sampleRate, len = Math.floor(rate * sec);
+    const buf = ctx.createBuffer(2, len, rate);
+    for (let ch = 0; ch < 2; ch++) {
+      const d = buf.getChannelData(ch);
+      for (let i = 0; i < len; i++) {
+        d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay);
+      }
+    }
+    return buf;
+  },
+
+  // 必须在用户手势里调用
+  wake(){
+    if (!this.boot()) return;
+    try { if (this.ctx.state === "suspended") this.ctx.resume(); } catch (e) {}
+    if (!this.started) { this.started = true; Music.start(); }
+  },
+
+  tone(freq, o){
+    if (!this.ready || !S.sfx) return;
+    o = o || {};
+    const ctx = this.ctx, t = ctx.currentTime;
+    const dur = o.dur || 0.6, gain = o.gain || 0.16, type = o.type || "sine";
+    const osc = ctx.createOscillator();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, t);
+    if (o.glide) osc.frequency.exponentialRampToValueAtTime(o.glide, t + dur);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(gain, t + (o.atk || 0.012));
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    osc.connect(g);
+    g.connect(o.bus || this.sfxGain);
+    osc.start(t);
+    osc.stop(t + dur + 0.05);
+  },
+
+  noise(dur, gain, freq){
+    if (!this.ready || !S.sfx) return;
+    const ctx = this.ctx, t = ctx.currentTime;
+    const len = Math.floor(ctx.sampleRate * dur);
+    const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    const f = ctx.createBiquadFilter();
+    f.type = "lowpass";
+    f.frequency.value = freq || 900;
+    const g = ctx.createGain();
+    g.gain.value = gain || 0.2;
+    src.connect(f); f.connect(g); g.connect(this.sfxGain);
+    src.start(t);
+  }
+};
+
+/* 五声音阶：无论怎么随机都不会难听 */
+const PENTA = [0, 2, 4, 7, 9];
+function noteFreq(semi, oct){
+  return 261.63 * Math.pow(2, semi / 12) * Math.pow(2, oct || 0);
+}
+
+const Sfx = {
+  tapEn(){ Audio2.tone(660, { dur: .16, gain: .09, type: "sine" }); },
+  tapZh(){ Audio2.tone(520, { dur: .16, gain: .09, type: "sine" }); },
+  match(combo){
+    const step = Math.min(combo, 12);
+    const semi = PENTA[step % 5] + 12 * Math.floor(step / 5);
+    Audio2.tone(noteFreq(semi, 1), { dur: .7, gain: .14, type: "sine" });
+    Audio2.tone(noteFreq(semi, 2), { dur: .45, gain: .055, type: "sine" });
+  },
+  soft(){ Audio2.tone(196, { dur: .3, gain: .07, type: "triangle" }); },
+  plant(){ Audio2.tone(noteFreq(PENTA[rnd(5)], 1), { dur: .5, gain: .11 }); },
+  coin(){ [0, 4, 7].forEach((s, i) => setTimeout(() => Audio2.tone(noteFreq(s, 1), { dur: .35, gain: .1 }), i * 70)); },
+  unlock(){ [0, 4, 7, 12, 16].forEach((s, i) => setTimeout(() => Audio2.tone(noteFreq(s, 1), { dur: .7, gain: .11 }), i * 95)); },
+  boom(){ Audio2.noise(.5, .26, 620); Audio2.tone(120, { dur: .5, gain: .16, glide: 48, type: "triangle" }); }
+};
+
+/* ==========================================================================
+   背景音乐 —— 生成式：慢和弦铺底 + 随机铃音
+   ========================================================================== */
+const Music = {
+  on: false, timer: null, melTimer: null, idx: 0,
+  chords: [
+    [174.61, [0, 4, 7, 11]],   // Fmaj7
+    [130.81, [0, 4, 7, 11]],   // Cmaj7
+    [146.83, [0, 3, 7, 10]],   // Dm7
+    [196.00, [0, 4, 7, 11]]    // G7
+  ],
+  start(){
+    if (!Audio2.ready || this.on) return;
+    this.on = true;
+    if (!S.music) { Audio2.musicGain.gain.value = 0.0001; }
+    else { Audio2.musicGain.gain.setTargetAtTime(0.34, Audio2.ctx.currentTime, 2.2); }
+    this.playChord();
+    this.timer = setInterval(() => this.playChord(), 8200);
+    this.melTimer = setInterval(() => this.melody(), 1500);
+  },
+  stop(){
+    this.on = false;
+    if (this.timer) clearInterval(this.timer);
+    if (this.melTimer) clearInterval(this.melTimer);
+    this.timer = this.melTimer = null;
+    if (Audio2.ready) Audio2.musicGain.gain.setTargetAtTime(0.0001, Audio2.ctx.currentTime, .5);
+  },
+  apply(){
+    if (!Audio2.ready || !this.on) return;
+    Audio2.musicGain.gain.setTargetAtTime(S.music ? 0.34 : 0.0001, Audio2.ctx.currentTime, .6);
+  },
+  playChord(){
+    if (!Audio2.ready || !S.music) { this.idx = (this.idx + 1) % this.chords.length; return; }
+    const ctx = Audio2.ctx, t = ctx.currentTime;
+    const [root, ivs] = this.chords[this.idx];
+    this.idx = (this.idx + 1) % this.chords.length;
+
+    // 低音
+    const b = ctx.createOscillator();
+    b.type = "sine";
+    b.frequency.value = root / 2;
+    const bg = ctx.createGain();
+    bg.gain.setValueAtTime(0.0001, t);
+    bg.gain.linearRampToValueAtTime(0.5, t + 3.5);
+    bg.gain.linearRampToValueAtTime(0.0001, t + 11);
+    b.connect(bg); bg.connect(Audio2.musicGain);
+    b.start(t); b.stop(t + 11.4);
+
+    // 和弦垫：每个音两根略微失谐的振荡器
+    for (const iv of ivs) {
+      for (const det of [-4, 4]) {
+        const o = ctx.createOscillator();
+        o.type = "sine";
+        o.frequency.value = root * Math.pow(2, iv / 12);
+        o.detune.value = det;
+        const g = ctx.createGain();
+        const peak = 0.16 / ivs.length;
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.linearRampToValueAtTime(peak, t + 3.2);
+        g.gain.linearRampToValueAtTime(0.0001, t + 10.6);
+        o.connect(g); g.connect(Audio2.musicGain);
+        o.start(t); o.stop(t + 11);
+      }
+    }
+  },
+  melody(){
+    if (!Audio2.ready || !S.music) return;
+    if (Math.random() < 0.42) return;          // 留白才有呼吸感
+    const ctx = Audio2.ctx, t = ctx.currentTime;
+    const semi = PENTA[rnd(5)] + 12 * (Math.random() < .5 ? 1 : 2);
+    const f = noteFreq(semi, 0);
+    const o = ctx.createOscillator();
+    o.type = "sine";
+    o.frequency.value = f;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.07, t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 3.4);
+    o.connect(g); g.connect(Audio2.musicGain);
+    o.start(t); o.stop(t + 3.6);
   }
 };
 
@@ -852,450 +684,196 @@ const Sfx = {
    朗读
    ========================================================================== */
 const TTS = {
-  voice:null,
+  voice: null,
   pick(){
-    if (!("speechSynthesis" in window)) return;
-    const vs = speechSynthesis.getVoices();
-    if (!vs.length) return;
-    for (const w of ["Google US English","Microsoft Aria","Microsoft Zira","Samantha"]) {
-      const v = vs.find(x => x.name && x.name.includes(w));
-      if (v) { this.voice = v; return; }
-    }
-    this.voice = vs.find(x => /^en[-_]US/i.test(x.lang)) || vs.find(x => /^en/i.test(x.lang)) || null;
+    try {
+      if (!("speechSynthesis" in window)) return;
+      const vs = speechSynthesis.getVoices();
+      if (!vs.length) return;
+      for (const name of ["Google US English", "Microsoft Aria", "Microsoft Zira", "Samantha"]) {
+        const v = vs.find(x => x.name && x.name.indexOf(name) >= 0);
+        if (v) { this.voice = v; return; }
+      }
+      this.voice = vs.find(x => /^en[-_]US/i.test(x.lang)) || vs.find(x => /^en/i.test(x.lang)) || null;
+    } catch (e) {}
   },
   say(text, rate){
-    if (!("speechSynthesis" in window)) return;
+    if (!S.tts) return;
     try {
+      if (!("speechSynthesis" in window)) return;
       speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(text);
-      u.lang = "en-US"; u.rate = rate || .88;
+      u.lang = "en-US";
+      u.rate = rate || 0.86;
       if (this.voice) u.voice = this.voice;
       speechSynthesis.speak(u);
     } catch (e) {}
   }
 };
-if ("speechSynthesis" in window) {
-  TTS.pick();
-  speechSynthesis.onvoiceschanged = () => TTS.pick();
-}
-
-/* ==========================================================================
-   工具
-   ========================================================================== */
-const $ = id => document.getElementById(id);
-const rnd = n => Math.floor(Math.random() * n);
-const sample = a => a[rnd(a.length)];
-const esc = s => String(s).replace(/[&<>"']/g, c =>
-  ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-function shuffled(a){
-  const r = a.slice();
-  for (let i = r.length - 1; i > 0; i--) { const j = rnd(i + 1); [r[i], r[j]] = [r[j], r[i]]; }
-  return r;
-}
-const buzz = ms => { if (navigator.vibrate) { try { navigator.vibrate(ms); } catch (e) {} } };
-
-/* 根据文字长度和方块尺寸决定字号（文字允许折行，这里只保证不溢出） */
-function fontFor(text, isEn, w, h){
-  const base = Math.min(w, h);   // w/h 已扣掉内边距
-  const n = text.length;
-  if (isEn) {
-    if (n <= 5)  return Math.round(Math.min(18, base * .30));
-    if (n <= 7)  return Math.round(Math.min(15, base * .25));
-    if (n <= 9)  return Math.round(Math.min(13, base * .215));
-    return Math.round(Math.min(11, base * .185));
+try {
+  if ("speechSynthesis" in window) {
+    TTS.pick();
+    speechSynthesis.onvoiceschanged = () => TTS.pick();
   }
-  if (n <= 3) return Math.round(Math.min(19, base * .30));
-  if (n <= 5) return Math.round(Math.min(16, base * .255));
-  return Math.round(Math.min(14, base * .22));
-}
+} catch (e) {}
 
 /* ==========================================================================
-   背景
+   棋盘
+   --------------------------------------------------------------------------
+   关键不变量：棋盘上每个 wid 恰好两个方块，一个 en 一个 zh。
+   破了这条就会出现永远配不掉的孤块。
+
+   手感上的关键决定：模型（B.grid / B.all）**同步**更新，只有视觉是异步的。
+   所以永远不需要用 busy 锁住输入 —— 这正是旧版「点了没反应」的根源。
    ========================================================================== */
-(function blobs(){
-  const bg = $("bg");
-  ["#7b5cff","#25e0ae","#ff5f8f","#4f7cff"].forEach(c => {
-    const d = document.createElement("div");
-    d.className = "blob";
-    const s = 150 + rnd(150);
-    d.style.cssText = `width:${s}px;height:${s}px;background:${c};` +
-      `left:${rnd(85)}%;top:${rnd(80)}%;` +
-      `animation-duration:${24 + rnd(20)}s;animation-delay:${-rnd(18)}s`;
-    bg.appendChild(d);
-  });
-})();
+const B = { cols: 4, rows: 6, grid: [], all: [], sel: null, nextId: 1 };
 
-/* ==========================================================================
-   特效
-   ========================================================================== */
-function flyText(x, y, txt, minus){
-  const d = document.createElement("div");
-  d.className = "fly" + (minus ? " minus" : "");
-  d.textContent = txt;
-  d.style.left = x + "px"; d.style.top = y + "px";
-  document.body.appendChild(d);
-  d.animate([
-    {transform:"translate(-50%,-50%) scale(.5)", opacity:0},
-    {transform:"translate(-50%,-135%) scale(1.15)", opacity:1, offset:.24},
-    {transform:"translate(-50%,-250%) scale(.9)", opacity:0}
-  ], {duration:1000, easing:"cubic-bezier(.2,.85,.3,1)", fill:"forwards"})
-   .onfinish = () => d.remove();
-}
+const boardEl = $("board");
 
-function showCombo(n){
-  if (n < 2) return;
-  const el = $("comboEl");
-  el.textContent = n >= 8 ? `🔥 ${n} 连` : `${n} 连击`;
-  el.classList.remove("go"); void el.offsetWidth; el.classList.add("go");
-}
-
-function flash(){
-  const v = $("vig");
-  v.classList.add("on");
-  setTimeout(() => v.classList.remove("on"), 160);
-}
-
-function confetti(count, x, y){
-  const cols = ["#7b5cff","#25e0ae","#ffc53d","#ff5f8f","#4f7cff","#ff9a5c"];
-  for (let i = 0; i < (count || 30); i++) {
-    const d = document.createElement("div");
-    d.className = "conf";
-    d.style.background = sample(cols);
-    if (x == null) { d.style.left = (8 + Math.random() * 84) + "vw"; d.style.top = "-20px"; }
-    else { d.style.left = x + "px"; d.style.top = y + "px"; }
-    if (Math.random() < .4) d.style.borderRadius = "50%";
-    document.body.appendChild(d);
-    const dx = (Math.random() - .5) * 240;
-    const dy = x == null ? window.innerHeight + 60 : (Math.random() - .5) * 260 - 40;
-    d.animate([
-      {transform:"translate(0,0) rotate(0deg)", opacity:1},
-      {transform:`translate(${dx}px,${dy}px) rotate(${Math.random()*900-450}deg)`, opacity:.8}
-    ], {duration:1400 + Math.random() * 1200, easing:"cubic-bezier(.25,.6,.5,1)",
-        fill:"forwards", delay:Math.random() * 350})
-     .onfinish = () => d.remove();
-  }
-}
-
-let teachTimer = null;
-function teach(html, ms){
-  const el = $("teach");
-  el.innerHTML = html;
-  el.classList.add("on");
-  clearTimeout(teachTimer);
-  teachTimer = setTimeout(() => el.classList.remove("on"), ms || 2000);
-}
-
-/* ==========================================================================
-   屏幕
-   ========================================================================== */
-const screens = ["home","map","play"];
-const go = id => screens.forEach(s => $(s).classList.toggle("on", s === id));
-const modal = (id, on) => $(id).classList.toggle("on", !!on);
-const closeModals = () => ["mWin","mLose","mFinal","mHow"].forEach(m => modal(m, false));
-
-/* ==========================================================================
-   棋盘模型
-   ==========================================================================
-   grid[c] = [tile, ...] 从上到下，长度恒为 rows
-   tile = {id, wid, type:'en'|'zh', text, special, col, row, el}
-   不变量：场上任何方块，它的配对对象一定也在场上
-   ========================================================================== */
-const B = {
-  cols:4, rows:5,
-  grid:[],        // [col][row]
-  all:[],         // 所有 tile
-  sel:null,
-  nextId:1,
-  busy:false
-};
-
-function makeTile(wid, type, special){
-  const w = CET4[wid];
-  return {
-    id: B.nextId++,
-    wid,
-    type,
+function makeTile(wid, type, star){
+  const w = WORDS[wid];
+  const t = {
+    id: B.nextId++, wid: wid, type: type,
     text: type === "en" ? w.en : w.zh,
-    special: special || null,
-    col:0, row:0, el:null
+    star: !!star, bomb: false, col: 0, row: 0, el: null, dead: false
   };
+  B.all.push(t);          // 必须在建方块时就登记，renderBoard 靠 B.all 遍历
+  return t;
 }
 
-/* 建立初始棋盘 */
-function buildBoard(cols, rows, specialRate){
-  B.cols = cols; B.rows = rows;
-  B.sel = null; B.busy = false; B.nextId = 1;
+function onBoardWid(wid){
+  for (const t of B.all) if (t.wid === wid && !t.dead) return true;
+  return false;
+}
 
-  // 彻底清掉旧的
-  const board = $("board");
-  board.innerHTML = "";
-  B.grid = []; B.all = [];
+function buildBoard(){
+  for (const t of B.all) if (t.el && t.el.parentNode) t.el.parentNode.removeChild(t.el);
+  B.all = []; B.sel = null; B.nextId = 1;
+  B.cols = S.cols; B.rows = S.rows;
+  boardEl.style.setProperty("--cols", B.cols);
+  boardEl.style.setProperty("--rows", B.rows);
+  B.grid = [];
+  for (let c = 0; c < B.cols; c++) B.grid.push([]);
 
-  const pairs = (cols * rows) / 2;
-  const picked = shuffled(CET4).slice(0, pairs);
-
+  const pairs = Math.floor(B.cols * B.rows / 2);
+  const pool = shuffled(WORDS).slice(0, pairs);
   const tiles = [];
-  for (const w of picked) {
-    tiles.push(makeTile(w.id, "en", null));
-    tiles.push(makeTile(w.id, "zh", null));
+  for (const w of pool) {
+    tiles.push(makeTile(w.id, "en", false));
+    tiles.push(makeTile(w.id, "zh", false));
   }
-
-  // 打乱后按列自上而下填充
-  const flat = shuffled(tiles);
-  for (let c = 0; c < cols; c++) {
-    B.grid[c] = [];
-    for (let r = 0; r < rows; r++) {
-      const t = flat[c * rows + r];
-      if (!t) continue;
-      t.col = c; t.row = r;
-      B.grid[c][r] = t;
-      B.all.push(t);
+  const bag = shuffled(tiles);
+  let k = 0;
+  for (let c = 0; c < B.cols; c++) {
+    for (let r = 0; r < B.rows; r++) {
+      const t = bag[k++];
+      if (t) { t.col = c; t.row = r; B.grid[c].push(t); }
     }
   }
-
-  assignSpecials(specialRate);
-
-  // 建 DOM
-  for (const t of B.all) {
-    t.el = document.createElement("div");
-    t.el.className = "tile " + t.type;
-    t.el.innerHTML = '<div class="face"></div>';
-    t.el.querySelector(".face").textContent = t.text;
-    t.el.addEventListener("pointerdown", ev => { ev.preventDefault(); onTileTap(t); });
-    board.appendChild(t.el);
+  // 撒几个幸运方块
+  const stars = Math.random() < .5 ? 1 : 2;
+  for (let i = 0; i < stars; i++) {
+    const t = pick(B.all.filter(x => !x.star)) || B.all[0];
+    if (t) t.star = true;
   }
-
-  // 角标必须等 DOM 建好之后再画（assignSpecials 里 el 还是 null）
-  for (const t of B.all) if (t.special) paintFlag(t);
-
-  layoutAll(false);
+  ensureSpecials();
+  renderBoard(true);
 }
 
-/* 随机给若干"配对标"打上特殊标记 */
-function assignSpecials(rate){
-  if (!rate) return;
-  // 按词分组
-  const byWid = new Map();
-  for (const t of B.all) {
-    if (!byWid.has(t.wid)) byWid.set(t.wid, []);
-    byWid.get(t.wid).push(t);
-  }
-  const wids = shuffled([...byWid.keys()]);
-  const count = Math.max(0, Math.round(wids.length * rate));
-  for (let i = 0; i < count; i++) {
-    const grp = byWid.get(wids[i]);
-    if (!grp) continue;
-    const q = Math.random();
-    const kind = q < .40 ? "bomb" : (q < .72 ? "time" : "bolt");
-    grp.forEach(t => { t.special = kind; paintFlag(t); });
-  }
+/* 特殊方块：场上常驻 0~2 个 💥，配对时炸掉周围一圈 */
+function ensureSpecials(){
+  const have = B.all.filter(t => t.bomb && !t.dead).length;
+  if (have >= 2) return;
+  if (Math.random() > .5) return;
+  const cand = B.all.filter(t => !t.dead && !t.bomb && !t.star);
+  if (!cand.length) return;
+  const t = pick(cand);
+  t.bomb = true;
+  if (t.el) t.el.classList.add("bomb");
 }
 
-function paintFlag(t){
-  if (!t.el) return;
-  const face = t.el.querySelector(".face");
-  let f = face.querySelector(".flag");
-  if (!t.special) { if (f) f.remove(); return; }
-  if (!f) {
-    f = document.createElement("span");
-    face.appendChild(f);
-  }
-  f.className = "flag " + t.special;
-  f.textContent = t.special === "bomb" ? "💣" : (t.special === "time" ? "⏰" : "⚡");
+function renderBoard(instant){
+  for (const t of B.all) spawnTile(t, instant, instant ? 0 : B.rows);
+  layoutAll(instant);
 }
 
-/* 计算每个 tile 的位置 / 尺寸 / 字号
-   instant=false 时保留 transform 过渡，方块掉落才是滑下去的 */
+function spawnTile(t, instant, fromRows){
+  if (t.el) return;
+  const el = document.createElement("div");
+  el.className = "tile " + t.type + (t.star ? " star" : "") + (t.bomb ? " bomb" : "");
+  el.dataset.id = t.id;
+  const face = document.createElement("div");
+  face.className = "face";
+  face.textContent = t.text;
+  el.appendChild(face);
+  el.style.transform = "translate(" + (t.col * 100) + "%," + ((t.row - (fromRows || 0)) * 100) + "%)";
+  boardEl.appendChild(el);
+  t.el = el;
+}
+
+function fontFor(text, isEn, w, h){
+  const n = Math.max(1, text.length);
+  const byH = h * 0.34;
+  const byW = isEn ? w / (n * 0.56) : (n <= 3 ? w / n : (w * 2) / n);
+  return Math.max(9, Math.min(byH, byW, 21));
+}
+
 function layoutAll(instant){
   const W = 100 / B.cols, H = 100 / B.rows;
-  const board = $("board");
-  const bw = board.clientWidth / B.cols;
-  const bh = board.clientHeight / B.rows;
-
-  if (instant) for (const t of B.all) if (t.el) t.el.style.transition = "none";
-
+  const bw = boardEl.clientWidth / B.cols;
+  const bh = boardEl.clientHeight / B.rows;
   for (const t of B.all) {
     if (!t.el) continue;
+    t.el.style.transition = instant ? "none" : "";
     t.el.style.width = W + "%";
     t.el.style.height = H + "%";
-    t.el.style.transform = `translate(${t.col * 100}%,${t.row * 100}%)`;
-    const face = t.el.querySelector(".face");
-    if (face) face.style.fontSize = fontFor(t.text, t.type === "en", bw - 18, bh - 18) + "px";
+    const f = t.el.firstChild;
+    if (f) f.style.fontSize = fontFor(t.text, t.type === "en", bw - 8, bh - 8) + "px";
+    t.el.style.transform = "translate(" + (t.col * 100) + "%," + (t.row * 100) + "%)";
   }
-
   if (instant) {
-    void board.offsetWidth;                 // 强制重排，再统一恢复过渡
+    void boardEl.offsetWidth;
     for (const t of B.all) if (t.el) t.el.style.transition = "";
   }
 }
 
-window.addEventListener("resize", () => { if (B.all.length) layoutAll(true); });
-
-/* -------- 点击 -------- */
-function onTileTap(t){
-  if (B.busy || !G.running || t.dead) return;
-  Sfx.resume();
-  G.idle = 0;
-
-  // 点英文块 → 朗读
-  if (t.type === "en") TTS.say(CET4[t.wid].en);
-
-  // 取消选中
-  if (B.sel === t) {
-    t.el.classList.remove("sel");
-    B.sel = null;
-    Sfx.click();
-    return;
-  }
-
-  // 第一次选
-  if (!B.sel) {
-    B.sel = t;
-    t.el.classList.add("sel");
-    clearHint();
-    Sfx.tone(t.type === "en" ? 660 : 560, {dur:.1, type:"sine", gain:.06});
-    return;
-  }
-
-  // 第二次选 → 判定
-  const a = B.sel, b = t;
-  if (a.wid === b.wid && a.type !== b.type) {
-    a.el.classList.remove("sel");
-    B.sel = null;
-    resolveMatch(a, b);
-  } else {
-    // 配错
-    B.sel = null;
-    a.el.classList.remove("sel");
-    a.el.classList.add("bad"); b.el.classList.add("bad");
-    setTimeout(() => {
-      a.el && a.el.classList.remove("bad");
-      b.el && b.el.classList.remove("bad");
-    }, 460);
-    onMiss(a, b);
+function placeAll(){
+  for (let c = 0; c < B.cols; c++) {
+    const col = B.grid[c];
+    for (let r = 0; r < col.length; r++) { col[r].col = c; col[r].row = r; }
   }
 }
 
-/* -------- 配对成功 -------- */
-function resolveMatch(a, b){
-  B.busy = true;
-  G.idle = 0;
-  G.combo++;
-  G.maxCombo = Math.max(G.maxCombo, G.combo);
-  G.pairs++;
-
-  const mult = 1 + Math.min(G.combo - 1, 9) * .15;
-  let gain = Math.round(120 * mult);
-
-  // 消对加时间（不超过本关的时间上限）
-  G.time = Math.min(G.timeMax, G.time + 2.0);
-
-  Sfx.match(G.combo - 1);
-  buzz(10);
-
-  // 特殊效果 —— 必须在移除任何方块之前判定
-  const special = a.special || b.special;
-  const victims = new Set([a, b]);
-
-  if (special === "bomb") {
-    Sfx.boom(); buzz([18, 30, 26]);
-    for (const t of [a, b]) for (const nb of neighborsOf(t)) victims.add(nb);
-    // 被炸到的方块连它的另一半一起走，否则场上会剩孤块
-    for (const v of [...victims]) {
-      const mate = mateOf(v);
-      if (mate) victims.add(mate);
-    }
-    const extra = (victims.size - 2) * 45;
-    gain += extra;
-    flash();
-  }
-  else if (special === "time") {
-    Sfx.chime();
-    G.timeMax += 8;
-    G.time += 8;
-    gain += 60;
-    flyText(...centerOf(a), "+8s ⏰");
-  }
-  else if (special === "bolt") {
-    Sfx.spark();
-    const extra = randomPairOnBoard(victims);
-    if (extra) {
-      victims.add(extra[0]); victims.add(extra[1]);
-      gain += 150;
-    }
-  }
-
-  G.score += gain;
-
-  // 计分飘字
-  const c = centerOf(a);
-  flyText(c[0], c[1], "+" + gain);
-
-  // 记录见过的词
-  const w = CET4[a.wid];
-  if (!save.seen.includes(w.en)) save.seen.push(w.en);
-
-  // BOSS 掉血
-  if (G.lv.boss) {
-    G.bossHp = Math.max(0, G.bossHp - 1);
-    Sfx.hurt();
-    const fig = $("bossFig");
-    if (fig) { fig.classList.remove("hurt"); void fig.offsetWidth; fig.classList.add("hurt"); }
-  }
-
-  // 消除动画
-  const list = [...victims];
-  for (const t of list) {
-    t.dead = true;
-    if (t.el) t.el.classList.add("pop");
-  }
-  for (const t of list.slice(0, 6)) confetti(3, ...centerOf(t));
-
-  showCombo(G.combo);
-  if (G.combo > 0 && G.combo % 4 === 0) confetti(24);
-  updateHud();
-  updateTimeBar();
-
-  setTimeout(() => {
-    for (const t of list) {
-      if (t.el && t.el.parentNode) t.el.remove();
-      const i = B.all.indexOf(t);
-      if (i >= 0) B.all.splice(i, 1);
-    }
-    for (let c2 = 0; c2 < B.cols; c2++) B.grid[c2] = B.grid[c2].filter(t => !t.dead);
-    refill();
-    B.busy = false;
-  }, 320);
-
-  checkProgress();
+function clearEl(t){
+  if (t.el && t.el.parentNode) t.el.parentNode.removeChild(t.el);
+  t.el = null;
+  const i = B.all.indexOf(t);
+  if (i >= 0) B.all.splice(i, 1);
 }
 
-/* 消除之后补块。
-   关键不变量：新补的方块必须成对出现（同一个词的 en + zh），
-   否则场上会留下永远配不掉的孤块。 */
+/* 补块：新方块必须成对出现 */
 function refill(){
   const holes = [];
   for (let c = 0; c < B.cols; c++) {
     const miss = B.rows - B.grid[c].length;
     for (let k = 0; k < miss; k++) holes.push(c);
   }
-  if (!holes.length) { relayout(); return; }
+  if (!holes.length) return;
+  if (holes.length % 2) holes.pop();          // 防御：不变量要求偶数
 
-  // 消除总是成对发生，所以空位数是偶数；这里仍做一次防御
-  const needPairs = Math.ceil(holes.length / 2);
-  const avail = shuffled(CET4.filter(w => !onBoardWid(w.id)));
-  const pool = avail.length >= needPairs ? avail : shuffled(CET4);
+  const need = holes.length / 2;
+  const avail = shuffled(WORDS.filter(w => !onBoardWid(w.id)));
+  const pool = avail.length >= need ? avail : shuffled(WORDS);
 
-  const newTiles = [];
-  for (let i = 0; i < needPairs; i++) {
-    const w = pool[i] || sample(CET4);
-    const firstEn = Math.random() < .5;
-    newTiles.push(makeTile(w.id, firstEn ? "en" : "zh", null));
-    newTiles.push(makeTile(w.id, firstEn ? "zh" : "en", null));
+  const fresh = [];
+  for (let i = 0; i < need; i++) {
+    const w = pool[i % pool.length];
+    const enFirst = Math.random() < .5;
+    fresh.push(makeTile(w.id, enFirst ? "en" : "zh", false));
+    fresh.push(makeTile(w.id, enFirst ? "zh" : "en", false));
   }
+  const bag = shuffled(fresh).slice(0, holes.length);
 
-  // 打乱后塞进各列顶部
-  const bag = shuffled(newTiles).slice(0, holes.length);
   const byCol = new Map();
   holes.forEach((c, i) => {
     if (!byCol.has(c)) byCol.set(c, []);
@@ -1303,461 +881,486 @@ function refill(){
   });
   for (const [c, list] of byCol) B.grid[c] = list.concat(B.grid[c]);
 
-  // 新方块建 DOM
-  const board = $("board");
-  for (const t of bag) {
-    if (t.el) continue;
-    t.el = document.createElement("div");
-    t.el.className = "tile " + t.type + " spawn";
-    t.el.innerHTML = '<div class="face"></div>';
-    t.el.querySelector(".face").textContent = t.text;
-    t.el.addEventListener("pointerdown", ev => { ev.preventDefault(); onTileTap(t); });
-    board.appendChild(t.el);
-    B.all.push(t);
-    setTimeout(() => t.el && t.el.classList.remove("spawn"), 420);
-  }
-
-  applySpecialsToNew(bag);
-  // 用 layoutAll 而不是 relayout：新方块还没有 width/height，必须一起设上
+  for (const t of bag) spawnTile(t, false, B.rows);
+  placeAll();
+  // 先让浏览器认下「在棋盘上方」这个起始位置，落下动画才会真的播
+  void boardEl.offsetWidth;
   layoutAll(false);
 }
 
-function onBoardWid(wid){
-  return B.all.some(t => t.wid === wid && !t.dead);
-}
-
-function applySpecialsToNew(bag){
-  const rate = G.lv.sp;
-  if (!rate) return;
-  const byWid = new Map();
-  for (const t of bag) {
-    if (!byWid.has(t.wid)) byWid.set(t.wid, []);
-    byWid.get(t.wid).push(t);
-  }
-  for (const [wid, grp] of byWid) {
-    if (grp.length < 2) continue;
-    if (Math.random() > rate * 1.6) continue;
-    const q = Math.random();
-    const kind = q < .40 ? "bomb" : (q < .72 ? "time" : "bolt");
-    grp.forEach(t => { t.special = kind; paintFlag(t); });
-  }
-}
-
-/* 按列重新编号（填补空位后，上面的方块 row 变小 → 视觉上就是掉下来） */
-function relayout(instant){
-  for (let c = 0; c < B.cols; c++) {
-    B.grid[c].forEach((t, r) => { t.col = c; t.row = r; });
-  }
-  layoutAll(instant === true);
-}
-
-function neighborsOf(t){
-  const out = [];
-  for (let dc = -1; dc <= 1; dc++) {
-    for (let dr = -1; dr <= 1; dr++) {
-      if (!dc && !dr) continue;
-      const c = t.col + dc, r = t.row + dr;
-      if (c < 0 || c >= B.cols || r < 0 || r >= B.rows) continue;
-      const n = B.grid[c] && B.grid[c][r];
-      if (n && !n.dead) out.push(n);
-    }
-  }
-  return out;
-}
-
-/* 另一个半块（同词、异型、还活着）。
-   不变量保证每个词在场上恰好两个方块，所以这个查找是确定的。 */
 function mateOf(t){
-  return B.all.find(x => x !== t && x.wid === t.wid && x.type !== t.type && !x.dead) || null;
-}
-
-function randomPairOnBoard(exclude){
-  const cand = B.all.filter(t => !t.dead && !exclude.has(t) && !t.special);
-  const byWid = new Map();
-  for (const t of cand) {
-    if (!byWid.has(t.wid)) byWid.set(t.wid, []);
-    byWid.get(t.wid).push(t);
-  }
-  for (const [, grp] of byWid) {
-    const en = grp.find(x => x.type === "en"), zh = grp.find(x => x.type === "zh");
-    if (en && zh) return [en, zh];
+  for (const x of B.all) {
+    if (x !== t && !x.dead && x.wid === t.wid && x.type !== t.type) return x;
   }
   return null;
 }
 
-function centerOf(t){
-  const r = t.el.getBoundingClientRect();
-  return [r.left + r.width / 2, r.top + r.height / 2];
+function neighborsOf(t){
+  const out = [];
+  for (const d of [[0, -1], [0, 1], [-1, 0], [1, 0]]) {
+    const c = t.col + d[0], r = t.row + d[1];
+    if (c < 0 || c >= B.cols) continue;
+    const col = B.grid[c];
+    if (r < 0 || r >= col.length) continue;
+    if (col[r]) out.push(col[r]);
+  }
+  return out;
 }
 
-/* -------- 配对失败 -------- */
-function onMiss(a, b){
-  B.busy = true;
-  G.idle = 0;
-  G.combo = 0;
-  G.err++;
-  G.time -= 3;
-  Sfx.miss();
-  buzz([16, 40, 16]);
-  flash();
+/* ==========================================================================
+   点击
+   ========================================================================== */
+function onTap(t){
+  if (!t || t.dead || t.el === null) return;
+  Audio2.wake();
+  clearHint();
 
-  const c = centerOf(b);
-  flyText(c[0], c[1], "-3s", true);
+  if (B.sel === t) {
+    t.el.classList.remove("sel");
+    B.sel = null;
+    Sfx.soft();
+    return;
+  }
 
-  // 教学：把正确答案摆出来，顺便念一遍
-  const word = CET4[a.wid];
-  teach("<b>" + esc(word.en) + "</b> = " + esc(word.zh), 1900);
-  TTS.say(word.en);
-  if (!save.seen.includes(word.en)) save.seen.push(word.en);
-  if (!G.missed.some(w => w.en === word.en)) G.missed.push(word);
+  if (!B.sel) {
+    B.sel = t;
+    t.el.classList.add("sel");
+    if (t.type === "en") { Sfx.tapEn(); TTS.say(WORDS[t.wid].en); }
+    else Sfx.tapZh();
+    return;
+  }
 
-  // 高亮这一对，帮助建立联系
-  if (a.el) a.el.classList.add("hintpair");
-  if (b.el) b.el.classList.add("hintpair");
-  setTimeout(() => {
-    if (a.el) a.el.classList.remove("hintpair");
-    if (b.el) b.el.classList.remove("hintpair");
-  }, 1000);
+  const a = B.sel;
+  if (a.wid === t.wid && a.type !== t.type) {
+    a.el.classList.remove("sel");
+    B.sel = null;
+    doMatch(a, t);
+  } else {
+    a.el.classList.remove("sel");
+    B.sel = null;
+    doMiss(a, t);
+  }
+}
 
+let combo = 0;
+
+function doMatch(a, b){
+  combo++;
+  if (combo > S.best) { S.best = combo; }
+
+  const w = WORDS[a.wid];
+  const gain = Math.round((3 + Math.min(combo, 10)) * ((a.star || b.star) ? 3 : 1));
+
+  const victims = [a, b];
+  if (a.bomb || b.bomb) {
+    Sfx.boom(); buzz([14, 28, 20]);
+    for (const t of [a, b]) {
+      for (const nb of neighborsOf(t)) if (nb !== a && nb !== b) victims.push(nb);
+    }
+    for (const v of victims.slice()) {
+      const m = mateOf(v);
+      if (m && victims.indexOf(m) < 0) victims.push(m);
+    }
+  } else {
+    Sfx.match(combo);
+    buzz(12);
+  }
+
+  // ---- 模型同步更新（这一步之后，输入立刻可以继续） ----
+  for (const t of victims) { t.dead = true; if (t.el) t.el.classList.add("pop"); }
+  for (let c = 0; c < B.cols; c++) B.grid[c] = B.grid[c].filter(t => !t.dead);
+  setTimeout(() => { for (const t of victims) clearEl(t); }, 300);
+
+  S.sun += gain;
+  S.matches++;
+  if (S.seen.indexOf(w.en) < 0) S.seen.push(w.en);
+  save();
+
+  // 头一回玩，引导去花园，否则容易只消不懂养成
+  if (S.matches === 5 && Object.keys(S.owned).length <= 1) {
+    setTimeout(() => toast("攒够 ☀️ 了！去【花园】解锁第一朵花 🌼", 3000), 900);
+  }
+
+  // ---- 视觉 / 听觉 ----
+  const r = a.el ? a.el.getBoundingClientRect() : null;
+  if (r) flyText(r.left + r.width / 2, r.top + r.height / 2, "+" + gain + " ☀️");
+  if (r) burst(victims.length > 2 ? 14 : 5, r.left + r.width / 2, r.top + r.height / 2);
+  if (combo >= 3) showCombo(combo);
+  if (combo > 0 && combo % 5 === 0) { confetti(18); Sfx.coin(); }
+  buzz(10);
+
+  refill();
+  ensureSpecials();
   updateHud();
-  updateTimeBar();
 
-  setTimeout(() => { B.busy = false; }, 480);
-
-  if (G.time <= 0) endLevel(false);
+  if (combo === 1) TTS.say(w.en, 0.9);
+  else if (Math.random() < .5) TTS.say(w.en, 0.92);
 }
 
-/* -------- 提示（找不到配对时） -------- */
-let hintTiles = null;
+function doMiss(a, b){
+  combo = 0;
+  Sfx.soft();
+  buzz([10, 30, 10]);
+
+  const w = WORDS[a.wid];
+  if (S.seen.indexOf(w.en) < 0) { S.seen.push(w.en); save(); }
+
+  // 轻轻晃一下，不扣任何东西
+  for (const t of [a, b]) {
+    if (!t.el) continue;
+    t.el.classList.add("bad");
+    setTimeout(() => { if (t.el) t.el.classList.remove("bad"); }, 460);
+  }
+  hintPair(a, mateOf(a));
+  // 告诉答案，但语气是「顺便告诉你」
+  toast(w.en + " = " + w.zh, 1500);
+  TTS.say(w.en, 0.82);
+  updateHud();
+}
+
+/* ==========================================================================
+   提示
+   ========================================================================== */
+let hintT = null, hintTimer = null;
+function hintPair(x, y){
+  clearHint();
+  const arr = [x, y].filter(Boolean);
+  if (!arr.length) return;
+  hintT = arr;
+  for (const t of arr) if (t.el) t.el.classList.add("hintpair");
+  if (hintTimer) clearTimeout(hintTimer);
+  hintTimer = setTimeout(clearHint, 2000);
+}
 function clearHint(){
-  if (!hintTiles) return;
-  hintTiles.forEach(t => { if (t.el) t.el.classList.remove("hintpair"); });
-  hintTiles = null;
+  if (hintTimer) { clearTimeout(hintTimer); hintTimer = null; }
+  if (!hintT) return;
+  for (const t of hintT) if (t.el) t.el.classList.remove("hintpair");
+  hintT = null;
 }
 function autoHint(){
-  if (!G.running || B.busy || B.sel || hintTiles) return;
-  const p = randomPairOnBoard(new Set());
-  if (!p) return;
-  hintTiles = p;
-  p.forEach(t => t.el && t.el.classList.add("hintpair"));
-  setTimeout(() => { clearHint(); }, 2400);
+  if (B.sel || hintT) return;
+  const live = B.all.filter(t => !t.dead && t.type === "en");
+  if (!live.length) return;
+  const t = pick(live);
+  const m = mateOf(t);
+  if (m) hintPair(t, m);
 }
 
 /* ==========================================================================
-   游戏状态
+   视觉特效
    ========================================================================== */
-const G = {
-  lv:null, running:false, busy:false,
-  time:0, timeMax:0, idle:0,
-  score:0, combo:0, maxCombo:0, pairs:0, err:0,
-  bossHp:0, bossMax:0,
-  missed:[]     // 本关配错过的词（过关回顾用）
-};
+const PETALS = ["🌸", "🌼", "✨", "🌿", "💚"];
 
+function flyText(x, y, txt){
+  const d = document.createElement("div");
+  d.className = "fx";
+  d.textContent = txt;
+  d.style.left = x + "px";
+  d.style.top = y + "px";
+  document.body.appendChild(d);
+  try {
+    d.animate(
+      [{ transform: "translate(-50%,-50%) scale(.7)", opacity: 0 },
+       { transform: "translate(-50%,-120%) scale(1.15)", opacity: 1, offset: .3 },
+       { transform: "translate(-50%,-260%) scale(1)", opacity: 0 }],
+      { duration: 1000, easing: "cubic-bezier(.2,.8,.3,1)" }
+    ).onfinish = () => d.remove();
+  } catch (e) { setTimeout(() => d.remove(), 900); }
+}
+
+function burst(n, x, y){
+  for (let i = 0; i < n; i++) petal(x, y, 90);
+}
+function confetti(n){
+  for (let i = 0; i < n; i++) petal(window.innerWidth / 2, 0, 260);
+}
+function petal(x, y, spread){
+  const d = document.createElement("div");
+  d.className = "pt";
+  d.textContent = pick(PETALS);
+  d.style.left = x + "px";
+  d.style.top = y + "px";
+  document.body.appendChild(d);
+  const dx = (Math.random() - .5) * spread * 2;
+  const dy = (Math.random() * spread) + 40;
+  const rot = (Math.random() - .5) * 540;
+  try {
+    d.animate(
+      [{ transform: "translate(-50%,-50%) rotate(0deg) scale(.6)", opacity: 1 },
+       { transform: "translate(calc(-50% + " + dx + "px),calc(-50% + " + dy + "px)) rotate(" + rot + "deg) scale(1)", opacity: 0 }],
+      { duration: 900 + Math.random() * 700, easing: "cubic-bezier(.25,.7,.4,1)" }
+    ).onfinish = () => d.remove();
+  } catch (e) { setTimeout(() => d.remove(), 1200); }
+}
+
+function showCombo(n){
+  const el = $("comboTag");
+  const words = { 3: "不错", 5: "连击 5", 8: "连击 8", 12: "连击 12", 16: "顺得离谱", 20: "无敌了" };
+  el.textContent = words[n] || ("连击 " + n + " 🔥");
+  el.classList.remove("show");
+  void el.offsetWidth;
+  el.classList.add("show");
+}
+
+/* ==========================================================================
+   界面
+   ========================================================================== */
 function updateHud(){
-  $("hudSc").textContent = G.score;
-  const sc = $("hudSc");
-  sc.classList.remove("pop"); void sc.offsetWidth; sc.classList.add("pop");
-  setTimeout(() => sc.classList.remove("pop"), 190);
-
-  $("hudCombo").innerHTML = "连击 <b>" + G.combo + "</b>";
-  $("hudPairs").innerHTML = "已消除 <b>" + G.pairs + "</b> 对";
-  $("hudErr").innerHTML = "失误 <b>" + G.err + "</b>";
-
-  const lv = G.lv;
-  if (lv.boss) {
-    $("goalBar").style.width = ((G.bossMax - G.bossHp) / G.bossMax * 100) + "%";
-    $("goalNum").textContent = G.bossHp + "/" + G.bossMax;
-  } else {
-    $("goalBar").style.width = Math.min(100, G.pairs / lv.goal * 100) + "%";
-    $("goalNum").textContent = G.pairs + "/" + lv.goal;
-  }
+  $("hudSun").textContent = S.sun;
+  const w = $("hudCmbWrap");
+  $("hudCmb").textContent = combo;
+  w.classList.toggle("off", combo < 2);
+  $("playCount").textContent = "已消 " + S.matches + " 对";
 }
 
-function updateTimeBar(){
-  const frac = Math.max(0, Math.min(1, G.time / G.timeMax));
-  $("tfill").style.width = (frac * 100) + "%";
-  $("ttxt").textContent = Math.ceil(Math.max(0, G.time)) + "s";
-  const bar = $("tbar");
-  bar.classList.toggle("warn", frac <= .45 && frac > .22);
-  bar.classList.toggle("danger", frac <= .22);
+function showScreen(name){
+  for (const s of document.querySelectorAll(".scr")) s.classList.toggle("on", s.id === "scr" + name.charAt(0).toUpperCase() + name.slice(1));
+  for (const b of document.querySelectorAll("#tabs button")) b.classList.toggle("on", b.dataset.scr === name);
+  if (name === "garden") renderGarden();
+  if (name === "dex") renderDex();
+  if (name === "play") setTimeout(() => layoutAll(true), 30);
 }
 
-function checkProgress(){
-  const lv = G.lv;
-  if (lv.boss) {
-    if (G.bossHp <= 0) setTimeout(() => endLevel(true), 480);
-  } else {
-    if (G.pairs >= lv.goal) setTimeout(() => endLevel(true), 480);
+/* ---------- 花园 ---------- */
+function renderGarden(){
+  const lawn = $("lawn");
+  lawn.innerHTML = "";
+  let filled = 0;
+  for (let i = 0; i < PLOTS; i++) {
+    const id = S.plots[i];
+    const b = document.createElement("button");
+    b.className = "plot" + (id ? " filled" : "");
+    b.dataset.i = i;
+    if (id) {
+      const d = DECOS.find(x => x.id === id);
+      const sp = document.createElement("span");
+      sp.className = "sw";
+      sp.textContent = d ? d.e : "🌱";
+      sp.style.animationDelay = (Math.random() * 3.4).toFixed(2) + "s";
+      b.appendChild(sp);
+      filled++;
+    } else {
+      const sp = document.createElement("span");
+      sp.className = "plus";
+      sp.textContent = "+";
+      b.appendChild(sp);
+    }
+    lawn.appendChild(b);
   }
+  $("gardenCount").textContent = filled + " / " + PLOTS;
+  renderShop();
 }
 
-/* ==========================================================================
-   主循环
-   ========================================================================== */
-let lastT = 0;
-function tick(now){
-  requestAnimationFrame(tick);
-  if (!G.running) { lastT = now; return; }
-  const dt = Math.min(.05, (now - (lastT || now)) / 1000);
-  lastT = now;
+function renderShop(){
+  const shop = $("shop");
+  shop.innerHTML = "";
+  let nextCost = null;
+  for (const d of DECOS) {
+    const owned = !!S.owned[d.id];
+    if (!owned && nextCost === null) nextCost = d.c - S.sun;
+    const row = document.createElement("div");
+    row.className = "shoprow";
 
-  G.time -= dt;
-  G.idle += dt;
+    const em = document.createElement("div");
+    em.className = "em";
+    em.textContent = owned ? d.e : "❔";
+    row.appendChild(em);
 
-  if (G.time <= 0) { G.time = 0; updateTimeBar(); endLevel(false); return; }
-  updateTimeBar();
+    const nm = document.createElement("div");
+    nm.className = "nm";
+    nm.innerHTML = esc(owned ? d.n : "???") + "<small>" + esc(owned ? d.d : "还没解锁，慢慢来") + "</small>";
+    row.appendChild(nm);
 
-  // 卡住时自动提示
-  if (G.idle > 7 && !B.sel && !B.busy) { autoHint(); G.idle = 0; }
-
-  // 最后 5 秒滴答
-  const s = Math.ceil(G.time);
-  if (s <= 5 && s !== G.lastTick) { G.lastTick = s; Sfx.tick(); }
+    const btn = document.createElement("button");
+    btn.className = "go";
+    if (owned) {
+      btn.classList.add("have");
+      btn.textContent = "已解锁";
+      btn.disabled = true;
+    } else if (S.sun >= d.c) {
+      btn.textContent = "☀️ " + d.c;
+      btn.onclick = () => unlock(d);
+    } else {
+      btn.classList.add("no");
+      btn.textContent = "☀️ " + d.c;
+      btn.disabled = true;
+    }
+    row.appendChild(btn);
+    shop.appendChild(row);
+  }
+  $("shopHint").textContent = nextCost !== null ? ("再消 " + Math.max(0, nextCost) + " ☀️ 解锁下一个") : "全解锁了 🌈";
 }
 
-/* ==========================================================================
-   关卡流程
-   ========================================================================== */
-function startLevel(n){
-  const lv = LEVELS.find(l => l.n === n);
-  if (!lv) return;
-  closeModals();
-  Sfx.init(); Sfx.resume();
-
-  G.lv = lv;
-  G.running = true;
-  G.time = lv.time;
-  G.timeMax = lv.time;
-  G.score = 0; G.combo = 0; G.maxCombo = 0;
-  G.pairs = 0; G.err = 0; G.idle = 0; G.lastTick = 99;
-  G.missed = [];
-  G.bossMax = lv.boss || 0;
-  G.bossHp = lv.boss || 0;
-  lastT = 0;
-
-  $("hudLv").innerHTML = "第 <b>" + lv.n + "</b> 关 · " + lv.name;
-
-  const goal = $("goal");
-  goal.classList.toggle("boss", !!lv.boss);
-  if (lv.boss) {
-    $("goalLbl").innerHTML = '<span class="bf" id="bossFig">' + (lv.icon || "👹") + "</span> " + lv.name;
-    $("goalNum").textContent = G.bossHp + "/" + G.bossMax;
-  } else {
-    $("goalLbl").textContent = "目标 " + lv.goal + " 对";
-    $("goalNum").textContent = "0/" + lv.goal;
-  }
-
-  go("play");
-  // 等布局稳定后再建棋盘，否则算不出方块尺寸
-  requestAnimationFrame(() => requestAnimationFrame(() => {
-    if (!G.running) return;
-    buildBoard(lv.cols, lv.rows, lv.sp);
-    updateHud(); updateTimeBar();
-  }));
-
-  Sfx.startPad();
-  teach(lv.boss
-    ? "👹 " + lv.name + " 出现 · 每消一对砍它一刀"
-    : "连成一对就消掉 · 目标 " + lv.goal + " 对", 2600);
+function unlock(d){
+  if (S.owned[d.id] || S.sun < d.c) return;
+  S.sun -= d.c;
+  S.owned[d.id] = true;
+  saveNow();
+  Sfx.unlock();
+  confetti(22);
+  toast("解锁了 " + d.e + " " + d.n + "！去花园种下吧", 2200);
+  updateHud();
+  renderGarden();
 }
 
-function endLevel(passed){
-  if (!G.running) return;
-  G.running = false;
-  B.busy = true;
-  clearHint();
-  Sfx.stopPad();
-  if ("speechSynthesis" in window) speechSynthesis.cancel();
-
-  if (!passed) {
-    Sfx.lose();
-    $("loseTitle").textContent = G.lv.boss ? "被拦下了" : "时间到";
-    $("loseDesc").innerHTML = G.lv.boss
-      ? "还差 <b>" + G.bossHp + "</b> 刀就赢了<br>消除 <b>" + G.pairs + "</b> 对 · 失误 <em>" + G.err + "</em> 次"
-      : "这关要消掉 <b>" + G.lv.goal + "</b> 对<br>你消了 <b>" + G.pairs + "</b> 对 · 失误 <em>" + G.err + "</em> 次";
-    renderReview("lRev", G.missed);
-    modal("mLose", true);
-    return;
-  }
-
-  Sfx.win();
-  confetti(60);
-
-  const stars = G.err <= 2 ? 3 : (G.err <= 6 ? 2 : 1);
-  save.stars[G.lv.n] = Math.max(save.stars[G.lv.n] || 0, stars);
-  save.best[G.lv.n] = Math.max(save.best[G.lv.n] || 0, G.score);
-  save.total = Object.values(save.best).reduce((a, b) => a + b, 0);
-  if (G.lv.n >= save.unlocked && G.lv.n < TOTAL_LV) save.unlocked = G.lv.n + 1;
-  const isFinal = G.lv.n === TOTAL_LV;
-  if (isFinal) save.cleared = true;
-  persist();
-
-  $("winEm").textContent = G.lv.boss ? "⚔️" : (stars === 3 ? "🌟" : "🎉");
-  $("winTitle").textContent = G.lv.boss ? G.lv.name + " 被击破！" : "第 " + G.lv.n + " 关 通过";
-  $("winDesc").innerHTML = stars === 3
-    ? "几乎没出错，手很稳 ✨"
-    : (stars === 2 ? "小失误几次，过关了" : "过关了，这些词再练一遍会更熟");
-
-  $("wSc").textContent = G.score;
-  $("wPairs").textContent = G.pairs;
-  $("wCombo").textContent = G.maxCombo;
-  renderReview("wRev", G.missed);
-
-  fillStars(stars);
-
-  const nb = $("winNext");
-  if (isFinal) {
-    nb.textContent = "看看总成绩 →";
-    nb.onclick = () => { modal("mWin", false); showFinal(); };
-  } else {
-    nb.textContent = "第 " + (G.lv.n + 1) + " 关 →";
-    nb.onclick = () => startLevel(G.lv.n + 1);
-  }
-
-  modal("mWin", true);
-}
-
-function fillStars(stars){
-  const box = $("winStars");
-  box.innerHTML = "<i>★</i><i>★</i><i>★</i>";
-  const items = box.querySelectorAll("i");
-  for (let i = 0; i < stars; i++) {
-    setTimeout(() => {
-      items[i].classList.add("on");
-      Sfx.tone(660 + i * 220, {dur:.42, type:"triangle", gain:.12});
-      buzz(14);
-    }, 300 + i * 220);
-  }
-}
-
-function renderReview(id, words){
-  const box = $(id);
-  if (!words.length) {
-    box.innerHTML = '<div class="rw" style="justify-content:center;color:#7dffd4">' +
-      "<span>这一关一个词都没配错 🎯</span></div>";
-    return;
-  }
-  box.innerHTML = words.map((w, i) =>
-    '<div class="rw"><span class="e">' + esc(w.en) + '</span>' +
-    '<span class="z">' + esc(w.zh) + '</span>' +
-    '<button class="s" data-i="' + i + '">🔊</button></div>').join("");
-  box.querySelectorAll(".s").forEach(b => {
+/* ---------- 种东西 ---------- */
+let pickingPlot = -1;
+function openPick(i){
+  pickingPlot = i;
+  const grid = $("pickGrid");
+  grid.innerHTML = "";
+  for (const d of DECOS) {
+    if (!S.owned[d.id]) continue;
+    const b = document.createElement("button");
+    b.className = "pick" + (S.plots[i] === d.id ? " on" : "");
+    b.textContent = d.e;
+    b.title = d.n;
     b.onclick = () => {
-      const w = words[Number(b.dataset.i)];
-      if (w) { Sfx.resume(); Sfx.click(); TTS.say(w.en); }
+      S.plots[i] = d.id;
+      Sfx.plant();
+      saveNow();
+      closeAll();
+      renderGarden();
     };
-  });
+    grid.appendChild(b);
+  }
+  openOvl("ovlPick");
 }
 
-function showFinal(){
-  const st = Object.values(save.stars).reduce((a, b) => a + b, 0);
-  $("finalName").textContent = CONFIG.name;
-  $("finalDesc").innerHTML = CONFIG.finalMessage;
-  $("fStars").textContent = st + " / " + MAX_STARS;
-  $("fScore").textContent = save.total;
-  $("fWords").textContent = save.seen.length;
-  confetti(110);
-  Sfx.win();
-  modal("mFinal", true);
+/* ---------- 图鉴 ---------- */
+function renderDex(){
+  const g = $("dexGrid");
+  g.innerHTML = "";
+  const seen = new Set(S.seen);
+  for (const w of WORDS) {
+    const has = seen.has(w.en);
+    const c = document.createElement("div");
+    c.className = "wcard" + (has ? "" : " locked");
+    c.innerHTML = '<div class="e">' + esc(has ? w.en : "• • •") + '</div>' +
+                  '<div class="z">' + esc(has ? w.zh : "还没遇到") + "</div>";
+    if (has) c.onclick = () => { Audio2.wake(); TTS.say(w.en); Sfx.soft(); };
+    g.appendChild(c);
+  }
+  $("dexCount").textContent = S.seen.length + " / " + WORDS.length;
 }
 
-/* ==========================================================================
-   地图
-   ========================================================================== */
-function renderMap(){
-  $("road").innerHTML = LEVELS.map(lv => {
-    const stars = save.stars[lv.n] || 0;
-    const done = stars > 0;
-    const open = lv.n <= save.unlocked;
-    const isNext = lv.n === save.unlocked && !done;
+/* ---------- 浮层 ---------- */
+function openOvl(id){ $(id).classList.add("on"); }
+function closeAll(){ for (const o of document.querySelectorAll(".ovl")) o.classList.remove("on"); }
 
-    const cls = ["node"];
-    if (done) cls.push("done");
-    if (isNext) cls.push("next");
-    if (!open) cls.push("lock");
-    if (lv.boss) cls.push("boss");
-
-    const starHtml = [0,1,2].map(i =>
-      '<i class="' + (i < stars ? "on" : "") + '">★</i>').join("");
-
-    const meta = lv.boss
-      ? "BOSS<span class=\"d\">·</span>砍 " + lv.boss + " 刀<span class=\"d\">·</span>" + lv.cols + "×" + lv.rows
-      : "消 " + lv.goal + " 对<span class=\"d\">·</span>" + lv.time + "s<span class=\"d\">·</span>" + lv.cols + "×" + lv.rows;
-
-    const icon = !open ? "🔒" : (lv.boss ? (lv.icon || "👹") : lv.n);
-
-    return '<button class="' + cls.join(" ") + '" data-n="' + lv.n + '"' + (open ? "" : " disabled") + '>' +
-      '<span class="idx">' + icon + "</span>" +
-      '<span class="bd"><span class="nm">' + lv.name + "</span>" +
-      '<span class="mt">' + meta + "</span></span>" +
-      (lv.boss ? "" : '<span class="stars">' + starHtml + "</span>") +
-      (save.best[lv.n] ? '<span class="best">最高 ' + save.best[lv.n] + "</span>" : "") +
-      "</button>";
-  }).join("");
-
-  $("road").querySelectorAll(".node").forEach(el => {
-    el.onclick = () => {
-      const n = Number(el.dataset.n);
-      if (n > save.unlocked) return;
-      Sfx.init(); Sfx.resume(); Sfx.click();
-      startLevel(n);
-    };
-  });
-
-  const total = Object.values(save.stars).reduce((a, b) => a + b, 0);
-  $("mapScore").textContent = "⭐ " + total + " / " + MAX_STARS;
-  $("mapSummary").textContent = save.cleared
-    ? "已全部通关 · 可以重刷星数"
-    : "已解锁 " + save.unlocked + " / " + TOTAL_LV + " 关 · ⭐ " + total;
+function renderSettings(){
+  for (const b of document.querySelectorAll("#segSize button")) {
+    b.classList.toggle("on", +b.dataset.c === S.cols && +b.dataset.r === S.rows);
+  }
+  setSeg("segMusic", S.music ? "1" : "0");
+  setSeg("segSfx", S.sfx ? "1" : "0");
+  setSeg("segTts", S.tts ? "1" : "0");
+}
+function setSeg(id, v){
+  for (const b of $(id).querySelectorAll("button")) b.classList.toggle("on", b.dataset.v === v);
 }
 
 /* ==========================================================================
    事件
    ========================================================================== */
-$("homeName").textContent = CONFIG.name;
-$("homeTag").textContent = CONFIG.tagline;
-document.title = CONFIG.name + " · 单词消消乐";
-
-$("btnPlay").onclick = () => {
-  Sfx.init(); Sfx.resume(); Sfx.click();
-  startLevel(save.cleared ? 1 : save.unlocked);
-};
-$("btnMap").onclick = () => { Sfx.init(); Sfx.resume(); Sfx.click(); renderMap(); go("map"); };
-$("btnHow").onclick = () => { Sfx.click(); modal("mHow", true); };
-$("howClose").onclick = () => { Sfx.click(); modal("mHow", false); };
-$("mapBack").onclick = () => { Sfx.click(); renderMap(); go("home"); };
-
-$("winRetry").onclick = () => startLevel(G.lv.n);
-$("winMap").onclick = () => { modal("mWin", false); renderMap(); go("map"); };
-$("loseRetry").onclick = () => startLevel(G.lv.n);
-$("loseMap").onclick = () => { modal("mLose", false); renderMap(); go("map"); };
-$("finalMap").onclick = () => { modal("mFinal", false); renderMap(); go("map"); };
-
-document.addEventListener("keydown", e => {
-  if (e.key === "Escape") {
-    if (["mHow","mWin","mLose","mFinal"].some(m => $(m).classList.contains("on"))) closeModals();
-    else if (G.running) { G.running = false; Sfx.stopPad(); renderMap(); go("map"); }
-  }
+boardEl.addEventListener("click", e => {
+  const el = e.target.closest ? e.target.closest(".tile") : null;
+  if (!el) return;
+  const id = +el.dataset.id;
+  const t = B.all.find(x => x.id === id);
+  if (t) onTap(t);
 });
 
+for (const b of document.querySelectorAll("#tabs button")) {
+  b.onclick = () => { Audio2.wake(); showScreen(b.dataset.scr); };
+}
+
+$("btnSet").onclick = () => { renderSettings(); openOvl("ovlSet"); };
+$("ovlSet").onclick = e => { if (e.target === $("ovlSet")) closeAll(); };
+$("ovlPick").onclick = e => { if (e.target === $("ovlPick")) closeAll(); };
+$("pickClear").onclick = () => {
+  if (pickingPlot >= 0) { S.plots[pickingPlot] = null; saveNow(); }
+  closeAll();
+  renderGarden();
+};
+
+$("lawn").addEventListener("click", e => {
+  const b = e.target.closest ? e.target.closest(".plot") : null;
+  if (!b) return;
+  Audio2.wake();
+  openPick(+b.dataset.i);
+});
+
+for (const b of document.querySelectorAll("#segSize button")) {
+  b.onclick = () => {
+    S.cols = +b.dataset.c; S.rows = +b.dataset.r;
+    saveNow(); renderSettings(); buildBoard(); updateHud();
+    toast("棋盘改成 " + S.cols + "×" + S.rows + " 了", 1400);
+  };
+}
+for (const b of document.querySelectorAll("#segMusic button")) {
+  b.onclick = () => { S.music = b.dataset.v === "1"; saveNow(); Music.apply(); renderSettings(); };
+}
+for (const b of document.querySelectorAll("#segSfx button")) {
+  b.onclick = () => { S.sfx = b.dataset.v === "1"; saveNow(); renderSettings(); if (S.sfx) Sfx.soft(); };
+}
+for (const b of document.querySelectorAll("#segTts button")) {
+  b.onclick = () => { S.tts = b.dataset.v === "1"; saveNow(); renderSettings(); if (S.tts) TTS.say("hello"); };
+}
+
+$("btnReset").onclick = () => {
+  if (!confirm("清空所有进度？花和阳光都没了。")) return;
+  S = JSON.parse(JSON.stringify(DEFAULTS));
+  saveNow();
+  combo = 0;
+  closeAll();
+  buildBoard(); updateHud(); renderSettings(); renderGarden(); renderDex();
+  toast("已经重来了 🌱", 1500);
+};
+
+// 卡住不动就提示
+let idleT = 0;
+setInterval(() => {
+  if (!$("scrPlay").classList.contains("on")) { idleT = 0; return; }
+  idleT++;
+  if (idleT >= 9) { idleT = 0; autoHint(); }
+}, 1000);
+document.addEventListener("pointerdown", () => { idleT = 0; }, true);
+
+window.addEventListener("resize", () => { if (B.all.length) layoutAll(true); });
+window.addEventListener("orientationchange", () => setTimeout(() => { if (B.all.length) layoutAll(true); }, 260));
+
+// 切出去只暂停音乐，绝不动进度（旧版这里会把整关卡掉）
 document.addEventListener("visibilitychange", () => {
-  if (document.hidden && G.running) {
-    G.running = false;
-    Sfx.stopPad();
-    if ("speechSynthesis" in window) speechSynthesis.cancel();
-    renderMap(); go("map");
-    teach("已暂停 · 关卡需要重新开始", 2200);
-  }
+  try {
+    if (document.hidden) {
+      if (Audio2.ready) Audio2.musicGain.gain.setTargetAtTime(0.0001, Audio2.ctx.currentTime, .4);
+      if ("speechSynthesis" in window) speechSynthesis.cancel();
+    } else {
+      Music.apply();
+    }
+  } catch (e) {}
 });
 
 document.addEventListener("gesturestart", e => e.preventDefault());
 document.addEventListener("dblclick", e => e.preventDefault());
-window.addEventListener("orientationchange", () => setTimeout(() => B.all.length && layoutAll(true), 260));
 
-/* 启动 */
-renderMap();
-requestAnimationFrame(tick);
+/* ==========================================================================
+   启动
+   ========================================================================== */
+buildBoard();
+updateHud();
+renderGarden();
+renderDex();
+renderSettings();
+setTimeout(() => layoutAll(true), 60);
+
+// 首次进入给一句招呼
+setTimeout(() => toast(CONFIG.name + "，" + CONFIG.hello, 2600), 700);
+
+window.__GAME__ = { B: B, S: function(){ return S; }, WORDS: WORDS, onTap: onTap,
+                    DECOS: DECOS, comboGet: function(){ return combo; },
+                    showScreen: showScreen, config: CONFIG };
 </script>
 </body>
 </html>
