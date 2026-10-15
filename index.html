@@ -3,272 +3,345 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="theme-color" content="#eaf7ef">
-<title>碎碎花园 · Word Garden</title>
+<meta name="theme-color" content="#0f2b3d">
+<title>荒岛日记 · Island Days</title>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;margin:0}
 body{
   font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Segoe UI",sans-serif;
-  background:linear-gradient(170deg,#e9f7ee 0%,#f3fbf5 42%,#fdf8ec 100%);
-  color:#2f3e46;overflow:hidden;user-select:none;-webkit-user-select:none;
+  background:#0f2b3d;color:#eaf3f8;overflow:hidden;user-select:none;-webkit-user-select:none;
   touch-action:manipulation;
 }
-#app{display:flex;flex-direction:column;height:100dvh;max-width:540px;margin:0 auto;position:relative}
+#app{display:flex;flex-direction:column;height:100dvh;max-width:560px;margin:0 auto;position:relative;
+  background:linear-gradient(180deg,#12314a 0%,#0d2434 100%)}
 
 /* ---------- 顶栏 ---------- */
-#hud{display:flex;align-items:center;gap:10px;
-  padding:calc(env(safe-area-inset-top,0px) + 12px) 14px 8px;flex:0 0 auto}
-.stat{display:flex;align-items:center;gap:5px;font-weight:800;font-size:15px;
-  background:rgba(255,255,255,.78);border:1px solid rgba(150,190,165,.4);
-  border-radius:999px;padding:6px 12px;box-shadow:0 2px 8px rgba(90,140,110,.08)}
-.stat b{font-variant-numeric:tabular-nums}
-.stat.sun{color:#b7791f}
-.stat.cmb{color:#2f855a}
-.stat.cmb.off{opacity:.35}
-#hud .sp{flex:1}
-.iconbtn{width:38px;height:38px;border-radius:12px;border:1px solid rgba(150,190,165,.45);
-  background:rgba(255,255,255,.8);font-size:17px;line-height:1;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;padding:0}
+#hud{flex:0 0 auto;padding:calc(env(safe-area-inset-top,0px) + 10px) 12px 0}
+.hudrow{display:flex;align-items:center;gap:8px}
+#dayBadge{font-weight:800;font-size:14px;background:rgba(255,255,255,.1);
+  border:1px solid rgba(255,255,255,.16);border-radius:999px;padding:6px 13px;white-space:nowrap}
+.hudrow .sp{flex:1}
+.iconbtn{width:36px;height:36px;border-radius:11px;border:1px solid rgba(255,255,255,.18);
+  background:rgba(255,255,255,.1);font-size:16px;cursor:pointer;display:flex;
+  align-items:center;justify-content:center;padding:0;color:#eaf3f8}
 .iconbtn:active{transform:scale(.94)}
+#resBar{display:flex;gap:6px;overflow-x:auto;padding:8px 0 6px;scrollbar-width:none}
+#resBar::-webkit-scrollbar{display:none}
+.res{flex:0 0 auto;display:flex;align-items:center;gap:4px;font-weight:800;font-size:13px;
+  background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.14);
+  border-radius:999px;padding:5px 11px;position:relative}
+.res .em{font-size:15px}
+.res.flash{animation:rflash .5s ease}
+@keyframes rflash{0%{transform:scale(1)}40%{transform:scale(1.18);background:rgba(126,217,155,.35)}100%{transform:scale(1)}}
+.res small{font-weight:600;opacity:.6;font-size:11px}
 
 /* ---------- 屏幕 ---------- */
 main{flex:1;min-height:0;position:relative}
-.scr{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;
-  display:none;padding:4px 12px 12px}
+.scr{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;display:none;padding:2px 12px 14px}
 .scr.on{display:block}
 
-/* ---------- 棋盘 ---------- */
-#boardTop{display:flex;align-items:center;justify-content:space-between;
-  padding:2px 4px 8px;font-size:13px;color:#5b7168}
-#boardTop .tip{font-weight:700}
-#board{
-  position:relative;width:100%;border-radius:18px;overflow:hidden;
-  background:rgba(255,255,255,.6);
-  box-shadow:0 10px 30px rgba(80,125,100,.14),inset 0 0 0 1px rgba(255,255,255,.9);
-  aspect-ratio:var(--cols) / var(--rows);
-}
-.tile{position:absolute;left:0;top:0;padding:3px;will-change:transform;
-  transition:transform .3s cubic-bezier(.3,1.25,.5,1)}
-.tile .face{width:100%;height:100%;border-radius:12px;display:flex;align-items:center;
-  justify-content:center;text-align:center;padding:3px;line-height:1.08;font-weight:800;
-  overflow-wrap:anywhere;word-break:break-word;
-  transition:transform .16s ease,box-shadow .16s ease,opacity .2s ease}
-.tile.en .face{background:linear-gradient(180deg,#eaf3ff,#d6e8ff);border:2px solid #b6d3f5;color:#1d4e7a}
-.tile.zh .face{background:linear-gradient(180deg,#fff2f5,#ffe1e9);border:2px solid #f7c2cf;color:#8a2b46}
-.tile.sel .face{transform:scale(1.07);box-shadow:0 0 0 3px #6ed39b,0 7px 16px rgba(60,120,90,.26)}
-.tile.bad .face{animation:shake .42s ease}
-.tile.hintpair .face{box-shadow:0 0 0 3px #ffce54;animation:breathe 1.1s ease-in-out infinite}
-.tile.pop .face{transform:scale(1.3);opacity:0}
-.tile.star .face{position:relative}
-.tile.star .face::after{content:"✨";position:absolute;top:1px;right:3px;font-size:11px}
-.tile.bomb .face{position:relative;box-shadow:0 0 0 2px #ffb09a}
-.tile.bomb .face::after{content:"💥";position:absolute;top:1px;right:3px;font-size:11px}
-@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}
-  40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
-@keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+/* ---------- 岛屿地图 ---------- */
+#sea{position:relative;width:100%;aspect-ratio:1/1.08;border-radius:20px;overflow:hidden;
+  background:linear-gradient(180deg,#1d5b7a,#164a66 60%,#123c55);
+  box-shadow:inset 0 0 60px rgba(0,0,0,.35)}
+#sea::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(180deg,rgba(255,255,255,.045) 0 2px,transparent 2px 9px);
+  animation:seaShift 7s linear infinite}
+@keyframes seaShift{from{transform:translateY(0)}to{transform:translateY(9px)}}
+#island{position:absolute;left:8%;top:9%;width:84%;height:80%;
+  border-radius:52% 44% 47% 55% / 46% 53% 47% 54%;
+  background:radial-gradient(ellipse at 42% 34%,#a8d18a,#7fbc6d 42%,#e6d3a2 72%,#dfc793 100%);
+  box-shadow:0 0 0 9px rgba(232,216,170,.34),0 0 46px rgba(0,0,0,.32),inset -14px -18px 40px rgba(90,120,60,.28)}
+.spot{position:absolute;transform:translate(-50%,-50%);border:0;background:transparent;
+  cursor:pointer;padding:0;display:flex;flex-direction:column;align-items:center;gap:3px}
+.spot .bub{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:27px;background:rgba(255,255,255,.86);border:3px solid rgba(255,255,255,.95);
+  box-shadow:0 6px 16px rgba(20,50,40,.3);transition:transform .16s}
+.spot:active .bub{transform:scale(.92)}
+.spot .nm{font-size:11.5px;font-weight:800;color:#1e3b2c;background:rgba(255,255,255,.82);
+  padding:2px 8px;border-radius:999px;white-space:nowrap;box-shadow:0 2px 6px rgba(20,50,40,.18)}
+.spot.locked .bub{background:rgba(180,195,205,.85);font-size:22px;filter:grayscale(.4)}
+.spot.locked .nm{background:rgba(200,212,220,.85);color:#5b6b76}
+.spot.open .bub{animation:bob 2.6s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+#bottle{position:absolute;font-size:24px;cursor:pointer;animation:bobB 2.2s ease-in-out infinite;
+  filter:drop-shadow(0 3px 6px rgba(0,0,0,.35))}
+@keyframes bobB{0%,100%{transform:translate(-50%,-50%)}50%{transform:translate(-50%,-62%)}}
 
-#comboTag{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%) scale(.6);
-  font-size:30px;font-weight:900;color:#e08a2e;opacity:0;pointer-events:none;
-  text-shadow:0 3px 0 #fff,0 6px 18px rgba(200,140,60,.35);white-space:nowrap}
-#comboTag.show{animation:cpop .75s ease-out}
-@keyframes cpop{0%{opacity:0;transform:translate(-50%,-50%) scale(.5)}
-  35%{opacity:1;transform:translate(-50%,-50%) scale(1.14)}
-  70%{opacity:1;transform:translate(-50%,-50%) scale(1)}
-  100%{opacity:0;transform:translate(-50%,-58%) scale(1)}}
+#goalBar{margin-top:11px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);
+  border-radius:14px;padding:11px 13px;font-size:13px;line-height:1.55}
+#goalBar b{color:#8fe0a8}
+#goalBar .lbl{opacity:.62;font-size:11.5px;display:block;margin-bottom:3px;letter-spacing:.04em}
 
-/* ---------- 花园 ---------- */
-.gcard{background:rgba(255,255,255,.72);border:1px solid rgba(160,200,175,.4);
-  border-radius:18px;padding:12px;box-shadow:0 8px 22px rgba(85,130,105,.1);margin-bottom:12px}
-.gcard h3{margin:0 0 8px;font-size:14px;color:#43695a;display:flex;align-items:center;gap:6px}
-.gcard h3 .n{font-weight:600;color:#7c9488;font-size:12px;margin-left:auto}
-#lawn{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;
-  background:linear-gradient(180deg,#dff2e2,#cfeacf);border-radius:14px;padding:8px;
-  box-shadow:inset 0 2px 10px rgba(90,150,110,.16)}
-.plot{aspect-ratio:1;border-radius:12px;border:2px dashed rgba(120,175,140,.45);
-  background:rgba(255,255,255,.34);display:flex;align-items:center;justify-content:center;
-  font-size:26px;line-height:1;cursor:pointer;padding:0;position:relative;
-  transition:transform .16s,background .16s}
-.plot:active{transform:scale(.93)}
-.plot.filled{border-style:solid;border-color:rgba(255,255,255,.7);
-  background:rgba(255,255,255,.5)}
-.plot .sw{display:block;animation:sway 3.4s ease-in-out infinite;transform-origin:50% 85%}
-@keyframes sway{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
-.plot .plus{font-size:16px;color:#8fbfa2;font-weight:800}
+/* ---------- 区域场景 ---------- */
+#zoneTop{display:flex;align-items:center;gap:8px;padding:2px 0 9px}
+#zoneTop .back{border:0;background:rgba(255,255,255,.12);color:#eaf3f8;border-radius:11px;
+  padding:7px 12px;font-weight:800;font-size:13px;cursor:pointer}
+#zoneTop h2{margin:0;font-size:16px;font-weight:800}
+#zoneTop .en{opacity:.5;font-size:11px;font-weight:600;display:block}
+#scene{position:relative;width:100%;aspect-ratio:1/1.18;border-radius:18px;overflow:hidden;
+  box-shadow:inset 0 0 50px rgba(0,0,0,.28)}
+.node{position:absolute;transform:translate(-50%,-50%);border:0;background:transparent;cursor:pointer;
+  padding:0;font-size:36px;line-height:1;transition:transform .15s;filter:drop-shadow(0 4px 7px rgba(0,0,0,.28))}
+.node:active{transform:translate(-50%,-50%) scale(.9)}
+.node.cool{opacity:.24;filter:grayscale(1);pointer-events:none}
+.node .tagname{position:absolute;left:50%;bottom:-13px;transform:translateX(-50%);
+  font-size:9px;font-weight:800;color:#fff;background:rgba(0,0,0,.42);padding:1px 6px;
+  border-radius:999px;white-space:nowrap;font-family:inherit}
+.node.pop{animation:npop .34s ease}
+@keyframes npop{0%{transform:translate(-50%,-50%) scale(1)}
+  45%{transform:translate(-50%,-50%) scale(1.28)}100%{transform:translate(-50%,-50%) scale(1)}}
+#zoneHint{margin-top:10px;font-size:12.5px;opacity:.66;line-height:1.6;text-align:center}
 
-.shoprow{display:flex;align-items:center;gap:10px;padding:8px 6px;border-radius:12px}
-.shoprow+.shoprow{border-top:1px dashed rgba(150,190,165,.32)}
-.shoprow .em{font-size:25px;width:34px;text-align:center;flex:0 0 auto}
-.shoprow .nm{font-weight:700;font-size:14px;flex:1;min-width:0}
-.shoprow .nm small{display:block;font-weight:500;color:#8aa79a;font-size:11px}
-.shoprow .go{border:0;border-radius:999px;padding:7px 14px;font-weight:800;font-size:13px;
-  background:linear-gradient(180deg,#68d391,#48bb78);color:#fff;cursor:pointer;
-  box-shadow:0 3px 10px rgba(72,187,120,.35);flex:0 0 auto}
-.shoprow .go:active{transform:scale(.95)}
-.shoprow .go.no{background:#e6ece8;color:#9db3a8;box-shadow:none}
-.shoprow .go.have{background:rgba(255,255,255,.9);color:#48a06e;border:1px solid #a8dcc0}
+/* ---------- 营地 ---------- */
+.card{background:rgba(255,255,255,.075);border:1px solid rgba(255,255,255,.13);
+  border-radius:16px;padding:12px;margin-bottom:11px}
+.card h3{margin:0 0 9px;font-size:14px;display:flex;align-items:center;gap:6px}
+.card h3 .n{margin-left:auto;font-size:11.5px;opacity:.58;font-weight:600}
+.brow{display:flex;align-items:center;gap:10px;padding:9px 0}
+.brow+.brow{border-top:1px dashed rgba(255,255,255,.11)}
+.brow .em{font-size:25px;width:32px;text-align:center;flex:0 0 auto}
+.brow .txt{flex:1;min-width:0}
+.brow .txt b{font-size:14px;font-weight:800}
+.brow .txt b i{font-style:normal;font-size:11px;opacity:.5;font-weight:600;margin-left:5px}
+.brow .txt span{display:block;font-size:11.5px;opacity:.62;margin-top:2px}
+.brow .cost{font-size:11px;opacity:.85;margin-top:3px;line-height:1.5}
+.brow .cost i{font-style:normal;margin-right:7px;white-space:nowrap}
+.brow .cost i.no{color:#ff97a8}
+.brow .act{border:0;border-radius:999px;padding:8px 15px;font-weight:800;font-size:12.5px;
+  background:linear-gradient(180deg,#63d28b,#3fae6a);color:#fff;cursor:pointer;flex:0 0 auto;
+  box-shadow:0 3px 11px rgba(63,174,106,.34)}
+.brow .act:active{transform:scale(.95)}
+.brow .act.no{background:rgba(255,255,255,.11);color:rgba(255,255,255,.42);box-shadow:none}
+.brow .act.done{background:rgba(255,255,255,.14);color:#8fe0a8;box-shadow:none}
+#campScene{display:flex;flex-wrap:wrap;gap:7px}
+.chip{display:flex;flex-direction:column;align-items:center;gap:1px;min-width:56px;
+  padding:8px 6px;border-radius:13px;background:rgba(255,255,255,.09);
+  border:1px solid rgba(255,255,255,.15);cursor:pointer;animation:chipIn .34s cubic-bezier(.3,1.3,.5,1)}
+@keyframes chipIn{from{transform:scale(.6);opacity:0}to{transform:none;opacity:1}}
+.chip:active{transform:scale(.94)}
+.chip .ce{font-size:23px;line-height:1.15}
+.chip .cn{font-size:9.5px;font-weight:700;opacity:.78;white-space:nowrap}
+.farm{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.plot{aspect-ratio:1;border-radius:13px;border:2px dashed rgba(255,255,255,.24);
+  background:rgba(120,90,60,.35);display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:2px;font-size:26px;cursor:pointer;color:#eaf3f8;padding:0}
+.plot.ready{border-style:solid;border-color:#8fe0a8;background:rgba(90,170,110,.3);
+  animation:bob 1.8s ease-in-out infinite}
+.plot small{font-size:9.5px;opacity:.72;font-weight:700}
 
-/* ---------- 图鉴 ---------- */
-.wgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:7px}
-.wcard{background:rgba(255,255,255,.72);border:1px solid rgba(165,200,180,.4);
-  border-radius:12px;padding:8px 10px;cursor:pointer;overflow:hidden}
-.wcard:active{transform:scale(.97)}
-.wcard .e{font-weight:800;font-size:13px;color:#1d4e7a;white-space:nowrap;
-  overflow:hidden;text-overflow:ellipsis}
-.wcard .z{font-size:12px;color:#8a2b46;margin-top:2px}
-.wcard.locked{opacity:.34}
-.wcard.locked .e,.wcard.locked .z{color:#7d8f87}
+/* ---------- 日记 ---------- */
+.dgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:7px}
+.dcard{background:rgba(255,255,255,.075);border:1px solid rgba(255,255,255,.13);
+  border-radius:12px;padding:9px 11px;cursor:pointer;display:flex;align-items:center;gap:9px}
+.dcard:active{transform:scale(.97)}
+.dcard .em{font-size:22px}
+.dcard .tx{min-width:0}
+.dcard .en{font-weight:800;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dcard .zh{font-size:11.5px;opacity:.62;margin-top:1px}
+.dcard.locked{opacity:.3}
 
-/* ---------- 底部标签 ---------- */
+/* ---------- 底部 ---------- */
 #tabs{flex:0 0 auto;display:flex;gap:6px;padding:6px 12px calc(env(safe-area-inset-bottom,0px) + 8px)}
 #tabs button{flex:1;border:0;border-radius:14px;padding:9px 4px 7px;background:transparent;
-  color:#84a094;font-size:11px;font-weight:700;cursor:pointer;line-height:1.5}
-#tabs button .i{display:block;font-size:19px;line-height:1.15;filter:grayscale(.6);opacity:.7}
-#tabs button.on{background:rgba(255,255,255,.85);color:#3d7a5e;
-  box-shadow:0 4px 14px rgba(85,130,105,.14)}
-#tabs button.on .i{filter:none;opacity:1}
+  color:#8fb0c4;font-size:11px;font-weight:700;cursor:pointer;line-height:1.5}
+#tabs button .i{display:block;font-size:19px;line-height:1.15;opacity:.62}
+#tabs button.on{background:rgba(255,255,255,.13);color:#eaf3f8}
+#tabs button.on .i{opacity:1}
 #tabs button:active{transform:scale(.96)}
 
 /* ---------- 浮层 ---------- */
-.ovl{position:fixed;inset:0;background:rgba(38,58,48,.42);backdrop-filter:blur(3px);
-  display:none;align-items:flex-end;justify-content:center;z-index:50;padding:0}
+.ovl{position:fixed;inset:0;background:rgba(6,18,26,.6);backdrop-filter:blur(3px);display:none;
+  align-items:flex-end;justify-content:center;z-index:60}
 .ovl.on{display:flex}
-.sheet{width:100%;max-width:540px;max-height:82vh;overflow-y:auto;
-  background:#fbfdfb;border-radius:22px 22px 0 0;
-  padding:16px 16px calc(env(safe-area-inset-bottom,0px) + 18px);
-  box-shadow:0 -12px 40px rgba(40,70,55,.24);animation:up .26s cubic-bezier(.3,1.2,.5,1)}
+.sheet{width:100%;max-width:560px;max-height:84vh;overflow-y:auto;background:#14324a;
+  border-radius:22px 22px 0 0;padding:16px 16px calc(env(safe-area-inset-bottom,0px) + 18px);
+  animation:up .26s cubic-bezier(.3,1.2,.5,1);box-shadow:0 -14px 44px rgba(0,0,0,.5)}
 @keyframes up{from{transform:translateY(30px);opacity:.4}to{transform:none;opacity:1}}
 .sheet h2{margin:0 0 4px;font-size:17px}
-.sheet .sub{color:#82a094;font-size:12.5px;margin-bottom:12px}
-.sheet .row{display:flex;align-items:center;gap:10px;padding:9px 0;font-size:14px}
-.sheet .row+.row{border-top:1px solid rgba(160,200,180,.28)}
-.sheet .row .lbl{flex:1;font-weight:700}
-.picks{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-.pick{aspect-ratio:1;border-radius:14px;border:2px solid rgba(160,200,180,.5);
-  background:#fff;font-size:27px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
-.pick.on{border-color:#48bb78;box-shadow:0 0 0 3px rgba(72,187,120,.25)}
-.pick:active{transform:scale(.94)}
+.sheet .sub{opacity:.6;font-size:12.5px;margin-bottom:12px}
+.row{display:flex;align-items:center;gap:10px;padding:10px 0;font-size:14px}
+.row+.row{border-top:1px solid rgba(255,255,255,.1)}
+.row .lbl{flex:1;font-weight:700}
 .seg{display:flex;gap:6px}
-.seg button{flex:1;border:1px solid rgba(160,200,180,.55);background:#fff;border-radius:11px;
-  padding:8px 0;font-weight:700;font-size:13px;color:#5b7168;cursor:pointer}
-.seg button.on{background:#48bb78;border-color:#48bb78;color:#fff}
-.danger{width:100%;margin-top:14px;border:1px solid #f0b8b8;background:#fff5f5;color:#c05656;
-  border-radius:12px;padding:11px;font-weight:800;font-size:13.5px;cursor:pointer}
+.seg button{border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.08);border-radius:11px;
+  padding:8px 13px;font-weight:700;font-size:13px;color:#cfe2ec;cursor:pointer}
+.seg button.on{background:#3fae6a;border-color:#3fae6a;color:#fff}
+.danger{width:100%;margin-top:14px;border:1px solid rgba(255,120,140,.4);
+  background:rgba(255,90,120,.12);color:#ff9db0;border-radius:12px;padding:11px;
+  font-weight:800;font-size:13.5px;cursor:pointer}
+#endSheet{text-align:center}
+#endSheet .big{font-size:52px;margin:6px 0 10px}
+#endSheet p{line-height:1.75;font-size:14px;opacity:.9}
 
-#toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 62px);
-  transform:translate(-50%,-14px);background:rgba(44,66,55,.94);color:#fff;
-  padding:10px 18px;border-radius:999px;font-size:13.5px;font-weight:700;
-  opacity:0;pointer-events:none;transition:.26s;z-index:80;max-width:88vw;text-align:center;
-  box-shadow:0 8px 24px rgba(30,60,45,.3)}
+#toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 74px);
+  transform:translate(-50%,-14px);background:rgba(10,28,40,.95);color:#fff;padding:10px 18px;
+  border-radius:999px;font-size:13.5px;font-weight:700;opacity:0;pointer-events:none;
+  transition:.26s;z-index:90;max-width:88vw;text-align:center;
+  border:1px solid rgba(255,255,255,.16);box-shadow:0 8px 26px rgba(0,0,0,.45)}
 #toast.on{opacity:1;transform:translate(-50%,0)}
-
-.fx{position:fixed;pointer-events:none;z-index:70;font-size:15px;font-weight:800;
-  color:#d69a2a;text-shadow:0 2px 0 #fff,0 4px 12px rgba(200,150,60,.35)}
-.pt{position:fixed;pointer-events:none;z-index:70;font-size:15px;line-height:1}
+.fx{position:fixed;pointer-events:none;z-index:80;font-size:15px;font-weight:800;color:#ffe9a8;
+  text-shadow:0 2px 8px rgba(0,0,0,.6);white-space:nowrap}
+.pt{position:fixed;pointer-events:none;z-index:80;font-size:16px;line-height:1}
 </style>
 </head>
 <body>
 <div id="app">
 
   <div id="hud">
-    <div class="stat sun">☀️ <b id="hudSun">0</b></div>
-    <div class="stat cmb off" id="hudCmbWrap">🔥 <b id="hudCmb">0</b></div>
-    <div class="sp"></div>
-    <button class="iconbtn" id="btnSet" aria-label="设置">⚙️</button>
+    <div class="hudrow">
+      <div id="dayBadge">第 1 天</div>
+      <div class="sp"></div>
+      <button class="iconbtn" id="btnSound" aria-label="声音">🌊</button>
+      <button class="iconbtn" id="btnSet" aria-label="设置">⚙️</button>
+    </div>
+    <div id="resBar"></div>
   </div>
 
   <main>
-    <!-- ===== 消除 ===== -->
-    <section class="scr on" id="scrPlay">
-      <div id="boardTop">
-        <span class="tip" id="playTip">点一个蓝块，再点它对应的粉块</span>
-        <span id="playCount">已消 0 对</span>
+    <!-- ===== 地图 ===== -->
+    <section class="scr on" id="scrMap">
+      <div id="sea">
+        <div id="island"></div>
       </div>
-      <div id="board"><div id="comboTag"></div></div>
+      <div id="goalBar"><span class="lbl">下一步</span><div id="goalTxt">正在看海…</div></div>
     </section>
 
-    <!-- ===== 花园 ===== -->
-    <section class="scr" id="scrGarden">
-      <div class="gcard">
-        <h3>🌿 我的花园 <span class="n" id="gardenCount"></span></h3>
-        <div id="lawn"></div>
+    <!-- ===== 区域 ===== -->
+    <section class="scr" id="scrZone">
+      <div id="zoneTop">
+        <button class="back" id="btnBack">‹ 地图</button>
+        <h2 id="zoneName">沙滩<span class="en">Beach</span></h2>
       </div>
-      <div class="gcard">
-        <h3>🌱 种子铺 <span class="n" id="shopHint"></span></h3>
-        <div id="shop"></div>
+      <div id="scene"></div>
+      <div id="zoneHint"></div>
+    </section>
+
+    <!-- ===== 营地 ===== -->
+    <section class="scr" id="scrCamp">
+      <div class="card">
+        <h3>🌙 过一天<span class="n" id="sleepHint"></span></h3>
+        <div class="brow">
+          <div class="em">🛌</div>
+          <div class="txt"><b>睡一觉<span class="en"></span></b>
+            <span>采集点全部恢复 · 庄稼长大 · 鸡羊产出</span></div>
+          <button class="act" id="btnSleep">睡觉</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3>🏕️ 我的营地<span class="n">点一下能听读音</span></h3>
+        <div id="campScene"></div>
+      </div>
+      <div class="card">
+        <h3>🔨 建造</h3>
+        <div id="buildList"></div>
+      </div>
+      <div class="card">
+        <h3>🎐 手工<span class="n">纯好看，不挡进度</span></h3>
+        <div id="craftList"></div>
+      </div>
+      <div class="card" id="lifeCard" style="display:none">
+        <h3>🌱 生活</h3>
+        <div id="lifeBox"></div>
       </div>
     </section>
 
-    <!-- ===== 图鉴 ===== -->
-    <section class="scr" id="scrDex">
-      <div class="gcard">
-        <h3>📖 单词图鉴 <span class="n" id="dexCount"></span></h3>
-        <div class="wgrid" id="dexGrid"></div>
+    <!-- ===== 日记 ===== -->
+    <section class="scr" id="scrDiary">
+      <div class="card">
+        <h3>🏝️ 岛上的东西<span class="n" id="diaryCount"></span></h3>
+        <div class="dgrid" id="diaryGrid"></div>
+      </div>
+      <div class="card">
+        <h3>✍️ 从海里捞到的词<span class="n" id="wordCount"></span></h3>
+        <div class="dgrid" id="wordGrid"></div>
       </div>
     </section>
   </main>
 
   <nav id="tabs">
-    <button class="on" data-scr="play"><span class="i">🎮</span>消除</button>
-    <button data-scr="garden"><span class="i">🌷</span>花园</button>
-    <button data-scr="dex"><span class="i">📖</span>图鉴</button>
+    <button class="on" data-scr="Map"><span class="i">🗺️</span>地图</button>
+    <button data-scr="Camp"><span class="i">🏕️</span>营地</button>
+    <button data-scr="Diary"><span class="i">📖</span>日记</button>
   </nav>
 </div>
-
-<!-- 种什么 -->
-<div class="ovl" id="ovlPick"><div class="sheet">
-  <h2>种点什么</h2>
-  <div class="sub">解锁过的都能随便种，不花阳光</div>
-  <div class="picks" id="pickGrid"></div>
-  <button class="danger" id="pickClear">🗑 拔掉这一格</button>
-</div></div>
 
 <!-- 设置 -->
 <div class="ovl" id="ovlSet"><div class="sheet">
   <h2>设置</h2>
-  <div class="sub">随便改，自动保存</div>
-
-  <div class="row"><span class="lbl">棋盘大小</span>
-    <div class="seg" id="segSize">
-      <button data-c="4" data-r="5">小</button>
-      <button data-c="4" data-r="6">中</button>
-      <button data-c="5" data-r="6">大</button>
-    </div>
-  </div>
-  <div class="row"><span class="lbl">背景音乐</span>
-    <div class="seg" id="segMusic">
-      <button data-v="1">开</button><button data-v="0">关</button>
+  <div class="sub">自动保存，随便改</div>
+  <div class="row"><span class="lbl">背景声音</span>
+    <div class="seg" id="segAmb">
+      <button data-v="waves">🌊 海浪</button>
+      <button data-v="rain">🌧 雨声</button>
+      <button data-v="off">静音</button>
     </div>
   </div>
   <div class="row"><span class="lbl">音效</span>
-    <div class="seg" id="segSfx">
-      <button data-v="1">开</button><button data-v="0">关</button>
-    </div>
+    <div class="seg" id="segSfx"><button data-v="1">开</button><button data-v="0">关</button></div>
   </div>
-  <div class="row"><span class="lbl">点英文块自动朗读</span>
-    <div class="seg" id="segTts">
-      <button data-v="1">开</button><button data-v="0">关</button>
-    </div>
+  <div class="row"><span class="lbl">采集时朗读英文</span>
+    <div class="seg" id="segTts"><button data-v="1">开</button><button data-v="0">关</button></div>
   </div>
+  <button class="danger" id="btnReset">清空进度，重新漂流一次</button>
+</div></div>
 
-  <button class="danger" id="btnReset">清空所有进度（重来）</button>
+<!-- 漂流瓶 -->
+<div class="ovl" id="ovlBottle"><div class="sheet">
+  <h2>🍾 捡到一个漂流瓶</h2>
+  <div class="sub">里面是一张单词卡</div>
+  <div style="text-align:center;padding:14px 0 18px">
+    <div id="botEn" style="font-size:26px;font-weight:900;letter-spacing:.02em"></div>
+    <div id="botZh" style="font-size:16px;opacity:.75;margin-top:7px"></div>
+    <button id="botSay" style="margin-top:16px;border:0;border-radius:999px;padding:10px 22px;
+      font-weight:800;font-size:13.5px;background:linear-gradient(180deg,#63d28b,#3fae6a);
+      color:#fff;cursor:pointer">🔊 再听一遍</button>
+  </div>
+</div></div>
+
+<!-- 通关 -->
+<div class="ovl" id="ovlEnd"><div class="sheet" id="endSheet">
+  <div class="big">⛵</div>
+  <h2>木筏造好了</h2>
+  <p id="endMsg"></p>
 </div></div>
 
 <div id="toast"></div>
 
 <script>
 /* ==========================================================================
-   配置 —— 想改成别的名字/别的祝福语，改这里就行
+   配置
    ========================================================================== */
 const CONFIG = {
   name: "超级071大王",
-  hello: "慢慢消，不着急 🌿",
-  footer: "这座花园是给你一个人种出来的"
+  islandName: "071 岛",
+  endMessage: "你在岛上待了 <b>%DAY%</b> 天，<br>捡了 <b>%GATHER%</b> 次东西，<br>学会了 <b>%WORDS%</b> 个单词。<br><br>木筏已经造好了——<br>但这座岛是你一个人从什么都没有建起来的。<br>它一直都会在。"
 };
 
 /* ==========================================================================
-   词库（四级）—— python 注入
+   资源
    ========================================================================== */
+const RES = {
+  wood:    { e:"🪵", en:"Wood",          zh:"木材" },
+  stone:   { e:"🪨", en:"Stone",         zh:"石头" },
+  fiber:   { e:"🌿", en:"Fiber",         zh:"纤维" },
+  shell:   { e:"🐚", en:"Shell",         zh:"贝壳" },
+  coconut: { e:"🥥", en:"Coconut",       zh:"椰子" },
+  bamboo:  { e:"🎍", en:"Bamboo",        zh:"竹子" },
+  vine:    { e:"🪢", en:"Vine",          zh:"藤蔓" },
+  berry:   { e:"🫐", en:"Berry",         zh:"浆果" },
+  clay:    { e:"🧱", en:"Clay",          zh:"黏土" },
+  crystal: { e:"💎", en:"Crystal",       zh:"晶石" },
+  flower:  { e:"🌺", en:"Flower",        zh:"野花" },
+  feather: { e:"🪶", en:"Feather",       zh:"羽毛" },
+  spring:  { e:"💧", en:"Spring water",  zh:"泉水" },
+  egg:     { e:"🥚", en:"Egg",           zh:"鸡蛋" },
+  milk:    { e:"🥛", en:"Milk",          zh:"羊奶" }
+};
+const RES_ORDER = ["wood","stone","fiber","shell","coconut","bamboo","vine","berry","clay","crystal","flower","feather","spring","egg","milk"];
+
+/* 四级词库。漂流瓶里捞上来的就是这些。 */
 const WORDS = [
   ["abandon","放弃"],["absorb","吸收"],["abstract","抽象的"],["academic","学术的"],
 ["accelerate","加速"],["accompany","陪伴"],["accomplish","完成"],["accurate","准确的"],
@@ -374,113 +447,153 @@ const WORDS = [
 ].map(([en, zh], i) => ({ id: i, en, zh }));
 
 /* ==========================================================================
-   可解锁的东西
+   区域
    ========================================================================== */
-const DECOS = [
-  { id:"grass",  e:"🌱", n:"草芽",     c:0,    d:"花园的第一点绿" },
-  { id:"stone",  e:"🪨", n:"小石头",   c:8,    d:"随便一块，也好看" },
-  { id:"daisy",  e:"🌼", n:"雏菊",     c:16,   d:"最省阳光的小花" },
-  { id:"mush",   e:"🍄", n:"蘑菇",     c:28,   d:"雨后自己冒出来" },
-  { id:"tulip",  e:"🌷", n:"郁金香",   c:44,   d:"一开就是一排" },
-  { id:"clover", e:"🍀", n:"三叶草",   c:64,   d:"据说能找到第四片" },
-  { id:"wheat",  e:"🌾", n:"麦穗",     c:88,   d:"风一吹就晃" },
-  { id:"sun",    e:"🌻", n:"向日葵",   c:116,  d:"永远朝着有光那边" },
-  { id:"sakura", e:"🌸", n:"樱花枝",   c:150,  d:"开的时候最热闹" },
-  { id:"pot",    e:"🪴", n:"小盆栽",   c:190,  d:"放在窗台上那种" },
-  { id:"bamboo", e:"🎋", n:"许愿竹",   c:236,  d:"可以把愿望挂上去" },
-  { id:"rose",   e:"🌹", n:"玫瑰",     c:288,  d:"带刺，但好看" },
-  { id:"bee",    e:"🐝", n:"蜜蜂",     c:346,  d:"嗡嗡嗡，不是来找你的" },
-  { id:"butter", e:"🦋", n:"蝴蝶",     c:410,  d:"会停在花上一会儿" },
-  { id:"ladybug",e:"🐞", n:"瓢虫",     c:480,  d:"背上七个点" },
-  { id:"palm",   e:"🌴", n:"棕榈",     c:556,  d:"假装这里是海边" },
-  { id:"rabbit", e:"🐇", n:"兔子",     c:638,  d:"会偷偷啃你的花" },
-  { id:"tree",   e:"🌳", n:"大树",     c:726,  d:"能遮一整个下午的太阳" },
-  { id:"cat",    e:"🐈", n:"猫",       c:820,  d:"它想来就来，想走就走" },
-  { id:"house",  e:"🏡", n:"小木屋",   c:920,  d:"花园终于有房子了" },
-  { id:"fount",  e:"⛲", n:"喷泉",     c:1026, d:"水声很安静" },
-  { id:"rainbow",e:"🌈", n:"彩虹",     c:1138, d:"得等下过雨" }
+const ZONES = [
+  { id:"beach", n:"沙滩", en:"Beach", e:"🏖️",
+    sky:"linear-gradient(180deg,#8fd3ee 0%,#bfe6f5 38%,#f2dfae 58%,#e8d29a 100%)",
+    hint:"潮水退了。漂来的东西都在这儿。",
+    nodes:[
+      { r:"wood",    p:[15,58] }, { r:"wood",    p:[82,64] }, { r:"wood",    p:[46,86] },
+      { r:"wood",    p:[12,38] }, { r:"wood",    p:[88,78] },
+      { r:"stone",   p:[33,74] }, { r:"stone",   p:[66,80] },
+      { r:"fiber",   p:[62,44] }, { r:"fiber",   p:[26,22] }, { r:"fiber",   p:[86,34] },
+      { r:"shell",   p:[52,94] },
+      { r:"coconut", p:[40,14] }
+    ]},
+  { id:"jungle", n:"丛林", en:"Jungle", e:"🌴",
+    sky:"linear-gradient(180deg,#2f7a4d 0%,#2b6b45 46%,#1e5236 100%)",
+    hint:"藤蔓垂下来，竹子长得比人高。地上有浆果。",
+    nodes:[
+      { r:"bamboo", p:[18,48] }, { r:"bamboo", p:[74,42] }, { r:"bamboo", p:[46,70] },
+      { r:"vine",   p:[34,26] }, { r:"vine",   p:[86,68] }, { r:"vine",   p:[12,74] },
+      { r:"berry",  p:[58,32] }, { r:"berry",  p:[26,62] }, { r:"berry",  p:[68,84] },
+      { r:"wood",   p:[52,52] }, { r:"flower", p:[8,26]  }, { r:"feather",p:[90,20] }
+    ]},
+  { id:"cave", n:"山洞", en:"Cave", e:"🕳️",
+    sky:"linear-gradient(180deg,#20303c 0%,#182531 50%,#101a23 100%)",
+    hint:"很暗。岩壁上嵌着发亮的东西。",
+    nodes:[
+      { r:"stone",   p:[16,44] }, { r:"stone",   p:[78,56] }, { r:"stone",   p:[46,84] },
+      { r:"crystal", p:[62,30] }, { r:"crystal", p:[24,72] },
+      { r:"clay",    p:[40,54] }, { r:"clay",    p:[86,84] }, { r:"clay",    p:[10,26] }
+    ]},
+  { id:"peak", n:"山顶", en:"Peak", e:"⛰️",
+    sky:"linear-gradient(180deg,#7fb6dd 0%,#aacde6 30%,#dfe9ef 52%,#b9cbd6 100%)",
+    hint:"风很大。这里的花比岛上任何地方都好看。",
+    nodes:[
+      { r:"flower",  p:[22,62] }, { r:"flower",  p:[70,68] }, { r:"flower",  p:[46,40] },
+      { r:"feather", p:[84,34] }, { r:"feather", p:[14,32] },
+      { r:"spring",  p:[54,80] }, { r:"crystal", p:[36,22] }, { r:"stone", p:[88,72] }
+    ]}
+];
+
+/* ==========================================================================
+   建筑
+   ========================================================================== */
+const BUILDS = [
+  { id:"campfire", e:"🔥", n:"篝火",   en:"Campfire", d:"晚上有一点光，煮点东西",
+    cost:{ wood:6, stone:4 } },
+  { id:"hut",      e:"🛖", n:"小屋",   en:"Hut",      d:"睡觉的地方",
+    cost:{ wood:14, fiber:10, coconut:8 } },
+  { id:"well",     e:"🚰", n:"水井",   en:"Well",     d:"每两天自动攒一点泉水",
+    cost:{ stone:10, wood:8 } },
+  { id:"farm",     e:"🌾", n:"农田",   en:"Farm",     d:"3 块地，能种浆果",
+    cost:{ wood:12, fiber:14 } },
+  { id:"coop",     e:"🐔", n:"鸡舍",   en:"Coop",     d:"每天下一个蛋",
+    cost:{ wood:18, fiber:18, coconut:10 } },
+  { id:"bridge",   e:"🌉", n:"木桥",   en:"Bridge",   d:"架过溪谷，通往丛林",
+    cost:{ wood:22, fiber:14, shell:8 }, unlock:"jungle" },
+  { id:"pen",      e:"🐐", n:"羊圈",   en:"Pen",      d:"每天挤一瓶奶",
+    cost:{ wood:24, fiber:20, bamboo:14 } },
+  { id:"mine",     e:"⛏️", n:"矿道",   en:"Mine",     d:"挖开山壁，通往山洞",
+    cost:{ wood:30, stone:20, bamboo:18 }, unlock:"cave" },
+  { id:"tower",    e:"🗼", n:"瞭望塔", en:"Tower",    d:"看得到山顶了",
+    cost:{ wood:45, stone:30, vine:20, clay:15 }, unlock:"peak" },
+  { id:"raft",     e:"⛵", n:"木筏",   en:"Raft",     d:"离开这座岛",
+    cost:{ wood:70, fiber:50, vine:30, crystal:10 }, unlock:"win" }
+];
+
+/* 手工摆件。纯装饰，不挡任何进度 —— 给贝壳、花、羽毛这些一个去处，
+   不然采一堆回来没地方用，攒着也只是数字。 */
+const CRAFTS = [
+  { id:"chime",   e:"🐚", n:"贝壳风铃", en:"Wind Chime",   d:"挂在屋檐下，海风一吹就响",
+    cost:{ shell:15, fiber:10 } },
+  { id:"garland", e:"🌺", n:"花环",     en:"Garland",      d:"编一串挂在门框上",
+    cost:{ flower:18, vine:8 } },
+  { id:"crown",   e:"🪶", n:"羽毛冠",   en:"Feather Crown",d:"戴上就像这岛的主人了",
+    cost:{ feather:14, vine:8 } },
+  { id:"lamp",    e:"🥥", n:"椰壳灯",   en:"Coconut Lamp", d:"晚上一直亮着，不会灭",
+    cost:{ coconut:12, clay:6 } }
 ];
 
 /* ==========================================================================
    存档
    ========================================================================== */
-const SAVE_KEY = "sshy_v1";
-const PLOT_COLS = 5, PLOT_ROWS = 6, PLOTS = PLOT_COLS * PLOT_ROWS;
-
+const SAVE_KEY = "island_v1";
 const DEFAULTS = {
-  sun: 0, matches: 0, best: 0,
-  owned: { grass: true },
-  plots: new Array(PLOTS).fill(null),
+  day: 1, gathered: 0,
+  res: { wood:0, stone:0, fiber:0, shell:0, coconut:0, bamboo:0, vine:0,
+         berry:0, clay:0, crystal:0, flower:0, feather:0, spring:0, egg:0, milk:0 },
+  built: {},
+  zones: { beach:true },
+  farm: [null, null, null],
   seen: [],
-  cols: 4, rows: 6,
-  music: true, sfx: true, tts: true
+  words: [],
+  amb: "waves", sfx: true, tts: true,
+  won: false, bottleDay: 0, bottlePos: null
 };
 
 let S = load();
-
 function load(){
   try {
     const raw = localStorage.getItem(SAVE_KEY);
     if (!raw) return JSON.parse(JSON.stringify(DEFAULTS));
     const o = JSON.parse(raw);
     const s = Object.assign(JSON.parse(JSON.stringify(DEFAULTS)), o);
-    if (!Array.isArray(s.plots) || s.plots.length !== PLOTS) {
-      const p = new Array(PLOTS).fill(null);
-      if (Array.isArray(s.plots)) for (let i = 0; i < Math.min(PLOTS, s.plots.length); i++) p[i] = s.plots[i];
-      s.plots = p;
-    }
+    s.res = Object.assign({}, DEFAULTS.res, o.res || {});
+    s.zones = Object.assign({ beach:true }, o.zones || {});
+    if (!Array.isArray(s.farm) || s.farm.length !== 3) s.farm = [null, null, null];
     if (!Array.isArray(s.seen)) s.seen = [];
+    if (!Array.isArray(s.words)) s.words = [];
     return s;
-  } catch (e) {
-    return JSON.parse(JSON.stringify(DEFAULTS));
-  }
+  } catch (e) { return JSON.parse(JSON.stringify(DEFAULTS)); }
 }
 let saveTimer = null;
 function save(){
   if (saveTimer) return;
-  saveTimer = setTimeout(() => {
-    saveTimer = null;
-    try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch (e) {}
-  }, 260);
+  saveTimer = setTimeout(() => { saveTimer = null; saveNow(); }, 240);
 }
 function saveNow(){
   try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch (e) {}
 }
 
 /* ==========================================================================
-   小工具
+   工具
    ========================================================================== */
 const $ = id => document.getElementById(id);
 const rnd = n => Math.floor(Math.random() * n);
 const pick = a => a[rnd(a.length)];
-function shuffled(a){
-  const b = a.slice();
-  for (let i = b.length - 1; i > 0; i--) { const j = rnd(i + 1); const t = b[i]; b[i] = b[j]; b[j] = t; }
-  return b;
-}
-function esc(s){
-  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
-function buzz(p){
-  if (!navigator.vibrate) return;
-  try { navigator.vibrate(p); } catch (e) {}
-}
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function buzz(p){ if (!navigator.vibrate) return; try { navigator.vibrate(p); } catch (e) {} }
 
 let toastT = null;
 function toast(msg, ms){
   const el = $("toast");
-  el.textContent = msg;
+  el.innerHTML = msg;
   el.classList.add("on");
   if (toastT) clearTimeout(toastT);
   toastT = setTimeout(() => el.classList.remove("on"), ms || 1700);
 }
+function openOvl(id){ $(id).classList.add("on"); }
+function closeAll(){ for (const o of document.querySelectorAll(".ovl")) o.classList.remove("on"); }
 
 /* ==========================================================================
-   声音 —— 全部实时合成，不加载任何文件
+   声音 —— 全部实时合成
+   海浪 = 布朗噪声 + 慢速涌浪调制；雨声 = 白噪声 + 雨滴 + 远雷
    ========================================================================== */
-const Audio2 = {
-  ctx: null, master: null, wet: null, sfxGain: null, musicGain: null,
-  ready: false, started: false,
+const Sound = {
+  ctx:null, ready:false, bus:null, master:null, mode:null, parts:[], timers:[],
 
   boot(){
     if (this.ready) return true;
@@ -490,207 +603,214 @@ const Audio2 = {
       const ctx = new AC();
       this.ctx = ctx;
       this.master = ctx.createGain();
-      this.master.gain.value = 0.9;
+      this.master.gain.value = 0.85;
       this.master.connect(ctx.destination);
 
-      // 混响：自己生成一段衰减噪声当 impulse response
       const conv = ctx.createConvolver();
-      conv.buffer = this.makeIR(2.6, 2.6);
-      const wetG = ctx.createGain();
-      wetG.gain.value = 0.42;
-      this.wet = ctx.createGain();
-      this.wet.connect(conv);
-      conv.connect(wetG);
-      wetG.connect(this.master);
+      conv.buffer = this.impulse(2.4, 2.4);
+      const wet = ctx.createGain();
+      wet.gain.value = 0.3;
+      this.bus = ctx.createGain();
+      this.bus.gain.value = 0.0001;
+      this.bus.connect(this.master);
+      this.bus.connect(conv);
+      conv.connect(wet);
+      wet.connect(this.master);
 
-      this.sfxGain = ctx.createGain();
-      this.sfxGain.gain.value = 0.5;
-      this.sfxGain.connect(this.master);
-      this.sfxGain.connect(this.wet);
+      this.sfxBus = ctx.createGain();
+      this.sfxBus.gain.value = 0.6;
+      this.sfxBus.connect(this.master);
+      this.sfxBus.connect(conv);
 
-      this.musicGain = ctx.createGain();
-      this.musicGain.gain.value = 0.0001;
-      this.musicGain.connect(this.master);
-      this.musicGain.connect(this.wet);
-
+      this.brownBuf = this.noise(11, "brown");
+      this.whiteBuf = this.noise(9, "white");
       this.ready = true;
       return true;
     } catch (e) { return false; }
   },
 
-  makeIR(sec, decay){
+  impulse(sec, decay){
     const ctx = this.ctx, rate = ctx.sampleRate, len = Math.floor(rate * sec);
-    const buf = ctx.createBuffer(2, len, rate);
+    const b = ctx.createBuffer(2, len, rate);
     for (let ch = 0; ch < 2; ch++) {
-      const d = buf.getChannelData(ch);
-      for (let i = 0; i < len; i++) {
-        d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay);
-      }
+      const d = b.getChannelData(ch);
+      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay);
     }
+    return b;
+  },
+
+  /* 生成一段无缝循环的噪声 */
+  noise(seconds, kind){
+    const ctx = this.ctx, rate = ctx.sampleRate;
+    const n = Math.floor(rate * seconds), fade = Math.floor(rate * 0.6);
+    const tmp = new Float32Array(n + fade);
+    if (kind === "brown") {
+      let last = 0;
+      for (let i = 0; i < n + fade; i++) {
+        const w = Math.random() * 2 - 1;
+        last = (last + 0.02 * w) / 1.02;
+        tmp[i] = last * 3.2;
+      }
+    } else {
+      for (let i = 0; i < n + fade; i++) tmp[i] = Math.random() * 2 - 1;
+    }
+    // 把尾巴交叉淡入开头，循环时听不出接缝
+    for (let i = 0; i < fade; i++) {
+      const k = i / fade;
+      tmp[i] = tmp[i] * k + tmp[n + i] * (1 - k);
+    }
+    const buf = ctx.createBuffer(1, n, rate);
+    buf.getChannelData(0).set(tmp.subarray(0, n));
     return buf;
   },
 
-  // 必须在用户手势里调用
   wake(){
     if (!this.boot()) return;
     try { if (this.ctx.state === "suspended") this.ctx.resume(); } catch (e) {}
-    if (!this.started) { this.started = true; Music.start(); }
+    if (!this.mode) this.setAmb(S.amb);
+  },
+
+  teardown(){
+    for (const p of this.parts) { try { p.stop(); } catch (e) {} }
+    for (const t of this.timers) clearInterval(t);
+    this.parts = []; this.timers = []; this.mode = null;
+  },
+
+  setAmb(mode){
+    if (!this.ready) { this.mode = mode; return; }
+    this.teardown();
+    this.mode = mode;
+    const ctx = this.ctx;
+    if (mode === "off") {
+      this.bus.gain.setTargetAtTime(0.0001, ctx.currentTime, .5);
+      return;
+    }
+    this.bus.gain.setTargetAtTime(0.5, ctx.currentTime, 1.6);
+
+    if (mode === "waves") {
+      const src = ctx.createBufferSource();
+      src.buffer = this.brownBuf; src.loop = true;
+      const lp = ctx.createBiquadFilter();
+      lp.type = "lowpass"; lp.frequency.value = 540; lp.Q.value = 0.6;
+      const g = ctx.createGain(); g.gain.value = 0.19;
+      const lfo = ctx.createOscillator(); lfo.type = "sine"; lfo.frequency.value = 0.072;
+      const lfoG = ctx.createGain(); lfoG.gain.value = 0.13;
+      lfo.connect(lfoG); lfoG.connect(g.gain);
+
+      const spray = ctx.createBufferSource();
+      spray.buffer = this.whiteBuf; spray.loop = true;
+      const bp = ctx.createBiquadFilter();
+      bp.type = "bandpass"; bp.frequency.value = 1450; bp.Q.value = 0.5;
+      const sg = ctx.createGain(); sg.gain.value = 0.016;
+      const lfo2 = ctx.createOscillator(); lfo2.type = "sine"; lfo2.frequency.value = 0.105;
+      const lfo2G = ctx.createGain(); lfo2G.gain.value = 0.014;
+      lfo2.connect(lfo2G); lfo2G.connect(sg.gain);
+
+      src.connect(lp); lp.connect(g); g.connect(this.bus);
+      spray.connect(bp); bp.connect(sg); sg.connect(this.bus);
+      src.start(); spray.start(); lfo.start(); lfo2.start();
+      this.parts = [src, spray, lfo, lfo2];
+
+    } else if (mode === "rain") {
+      const src = ctx.createBufferSource();
+      src.buffer = this.whiteBuf; src.loop = true;
+      const hp = ctx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 950;
+      const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 6800;
+      const g = ctx.createGain(); g.gain.value = 0.1;
+      src.connect(hp); hp.connect(lp); lp.connect(g); g.connect(this.bus);
+      src.start();
+      this.parts = [src];
+      this.timers.push(setInterval(() => this.drip(), 620));
+      this.timers.push(setInterval(() => this.thunder(), 34000 + Math.random() * 26000));
+    }
+  },
+
+  /* 雨滴：很轻的一声高频点 */
+  drip(){
+    if (!this.ready || this.mode !== "rain") return;
+    const ctx = this.ctx, t = ctx.currentTime;
+    const o = ctx.createOscillator();
+    o.type = "sine";
+    o.frequency.value = 900 + Math.random() * 1500;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.02, t + 0.004);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.09);
+    o.connect(g); g.connect(this.bus);
+    o.start(t); o.stop(t + 0.12);
+  },
+
+  /* 远雷：低沉的滚动 */
+  thunder(){
+    if (!this.ready || this.mode !== "rain") return;
+    const ctx = this.ctx, t = ctx.currentTime;
+    const src = ctx.createBufferSource();
+    src.buffer = this.brownBuf;
+    src.loop = true;
+    const lp = ctx.createBiquadFilter();
+    lp.type = "lowpass"; lp.frequency.value = 150; lp.Q.value = 1.2;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(0.42, t + 1.4);
+    g.gain.linearRampToValueAtTime(0.0001, t + 5.5);
+    src.connect(lp); lp.connect(g); g.connect(this.bus);
+    src.start(t); src.stop(t + 6);
   },
 
   tone(freq, o){
-    if (!this.ready || !S.sfx) return;
+    if (!this.ready || !S.sfx || !this.sfxBus) return;
     o = o || {};
     const ctx = this.ctx, t = ctx.currentTime;
-    const dur = o.dur || 0.6, gain = o.gain || 0.16, type = o.type || "sine";
+    const dur = o.dur || 0.4, gain = o.gain || 0.13;
     const osc = ctx.createOscillator();
-    osc.type = type;
+    osc.type = o.type || "sine";
     osc.frequency.setValueAtTime(freq, t);
     if (o.glide) osc.frequency.exponentialRampToValueAtTime(o.glide, t + dur);
     const g = ctx.createGain();
     g.gain.setValueAtTime(0.0001, t);
     g.gain.exponentialRampToValueAtTime(gain, t + (o.atk || 0.012));
     g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    osc.connect(g);
-    g.connect(o.bus || this.sfxGain);
-    osc.start(t);
-    osc.stop(t + dur + 0.05);
+    osc.connect(g); g.connect(this.sfxBus);
+    osc.start(t); osc.stop(t + dur + 0.05);
   },
 
-  noise(dur, gain, freq){
-    if (!this.ready || !S.sfx) return;
+  thunk(){ if (!this.ready || !S.sfx) return;
     const ctx = this.ctx, t = ctx.currentTime;
-    const len = Math.floor(ctx.sampleRate * dur);
-    const buf = ctx.createBuffer(1, len, ctx.sampleRate);
-    const d = buf.getChannelData(0);
-    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
-    const src = ctx.createBufferSource();
-    src.buffer = buf;
-    const f = ctx.createBiquadFilter();
-    f.type = "lowpass";
-    f.frequency.value = freq || 900;
-    const g = ctx.createGain();
-    g.gain.value = gain || 0.2;
-    src.connect(f); f.connect(g); g.connect(this.sfxGain);
-    src.start(t);
-  }
-};
-
-/* 五声音阶：无论怎么随机都不会难听 */
-const PENTA = [0, 2, 4, 7, 9];
-function noteFreq(semi, oct){
-  return 261.63 * Math.pow(2, semi / 12) * Math.pow(2, oct || 0);
-}
-
-const Sfx = {
-  tapEn(){ Audio2.tone(660, { dur: .16, gain: .09, type: "sine" }); },
-  tapZh(){ Audio2.tone(520, { dur: .16, gain: .09, type: "sine" }); },
-  match(combo){
-    const step = Math.min(combo, 12);
-    const semi = PENTA[step % 5] + 12 * Math.floor(step / 5);
-    Audio2.tone(noteFreq(semi, 1), { dur: .7, gain: .14, type: "sine" });
-    Audio2.tone(noteFreq(semi, 2), { dur: .45, gain: .055, type: "sine" });
-  },
-  soft(){ Audio2.tone(196, { dur: .3, gain: .07, type: "triangle" }); },
-  plant(){ Audio2.tone(noteFreq(PENTA[rnd(5)], 1), { dur: .5, gain: .11 }); },
-  coin(){ [0, 4, 7].forEach((s, i) => setTimeout(() => Audio2.tone(noteFreq(s, 1), { dur: .35, gain: .1 }), i * 70)); },
-  unlock(){ [0, 4, 7, 12, 16].forEach((s, i) => setTimeout(() => Audio2.tone(noteFreq(s, 1), { dur: .7, gain: .11 }), i * 95)); },
-  boom(){ Audio2.noise(.5, .26, 620); Audio2.tone(120, { dur: .5, gain: .16, glide: 48, type: "triangle" }); }
-};
-
-/* ==========================================================================
-   背景音乐 —— 生成式：慢和弦铺底 + 随机铃音
-   ========================================================================== */
-const Music = {
-  on: false, timer: null, melTimer: null, idx: 0,
-  chords: [
-    [174.61, [0, 4, 7, 11]],   // Fmaj7
-    [130.81, [0, 4, 7, 11]],   // Cmaj7
-    [146.83, [0, 3, 7, 10]],   // Dm7
-    [196.00, [0, 4, 7, 11]]    // G7
-  ],
-  start(){
-    if (!Audio2.ready || this.on) return;
-    this.on = true;
-    if (!S.music) { Audio2.musicGain.gain.value = 0.0001; }
-    else { Audio2.musicGain.gain.setTargetAtTime(0.34, Audio2.ctx.currentTime, 2.2); }
-    this.playChord();
-    this.timer = setInterval(() => this.playChord(), 8200);
-    this.melTimer = setInterval(() => this.melody(), 1500);
-  },
-  stop(){
-    this.on = false;
-    if (this.timer) clearInterval(this.timer);
-    if (this.melTimer) clearInterval(this.melTimer);
-    this.timer = this.melTimer = null;
-    if (Audio2.ready) Audio2.musicGain.gain.setTargetAtTime(0.0001, Audio2.ctx.currentTime, .5);
-  },
-  apply(){
-    if (!Audio2.ready || !this.on) return;
-    Audio2.musicGain.gain.setTargetAtTime(S.music ? 0.34 : 0.0001, Audio2.ctx.currentTime, .6);
-  },
-  playChord(){
-    if (!Audio2.ready || !S.music) { this.idx = (this.idx + 1) % this.chords.length; return; }
-    const ctx = Audio2.ctx, t = ctx.currentTime;
-    const [root, ivs] = this.chords[this.idx];
-    this.idx = (this.idx + 1) % this.chords.length;
-
-    // 低音
-    const b = ctx.createOscillator();
-    b.type = "sine";
-    b.frequency.value = root / 2;
-    const bg = ctx.createGain();
-    bg.gain.setValueAtTime(0.0001, t);
-    bg.gain.linearRampToValueAtTime(0.5, t + 3.5);
-    bg.gain.linearRampToValueAtTime(0.0001, t + 11);
-    b.connect(bg); bg.connect(Audio2.musicGain);
-    b.start(t); b.stop(t + 11.4);
-
-    // 和弦垫：每个音两根略微失谐的振荡器
-    for (const iv of ivs) {
-      for (const det of [-4, 4]) {
-        const o = ctx.createOscillator();
-        o.type = "sine";
-        o.frequency.value = root * Math.pow(2, iv / 12);
-        o.detune.value = det;
-        const g = ctx.createGain();
-        const peak = 0.16 / ivs.length;
-        g.gain.setValueAtTime(0.0001, t);
-        g.gain.linearRampToValueAtTime(peak, t + 3.2);
-        g.gain.linearRampToValueAtTime(0.0001, t + 10.6);
-        o.connect(g); g.connect(Audio2.musicGain);
-        o.start(t); o.stop(t + 11);
-      }
-    }
-  },
-  melody(){
-    if (!Audio2.ready || !S.music) return;
-    if (Math.random() < 0.42) return;          // 留白才有呼吸感
-    const ctx = Audio2.ctx, t = ctx.currentTime;
-    const semi = PENTA[rnd(5)] + 12 * (Math.random() < .5 ? 1 : 2);
-    const f = noteFreq(semi, 0);
-    const o = ctx.createOscillator();
-    o.type = "sine";
-    o.frequency.value = f;
+    const src = ctx.createBufferSource(); src.buffer = this.whiteBuf; src.loop = true;
+    const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 700;
     const g = ctx.createGain();
     g.gain.setValueAtTime(0.0001, t);
-    g.gain.exponentialRampToValueAtTime(0.07, t + 0.02);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + 3.4);
-    o.connect(g); g.connect(Audio2.musicGain);
-    o.start(t); o.stop(t + 3.6);
+    g.gain.linearRampToValueAtTime(0.16, t + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.22);
+    src.connect(lp); lp.connect(g); g.connect(this.sfxBus);
+    src.start(t); src.stop(t + 0.3);
   }
+};
+
+const Sfx = {
+  gather(){ Sound.thunk(); Sound.tone(520 + rnd(160), { dur:.2, gain:.09, type:"triangle" }); },
+  build(){ [0,4,7,12].forEach((s,i) => setTimeout(() =>
+    Sound.tone(261.63 * Math.pow(2, s/12), { dur:.6, gain:.11 }), i*90)); },
+  unlock(){ [0,4,7,12,19].forEach((s,i) => setTimeout(() =>
+    Sound.tone(261.63 * Math.pow(2, s/12), { dur:.8, gain:.12 }), i*110)); },
+  plant(){ Sound.tone(392, { dur:.3, gain:.1, type:"sine" }); },
+  harvest(){ [0,7,12].forEach((s,i) => setTimeout(() =>
+    Sound.tone(392 * Math.pow(2, s/12), { dur:.45, gain:.1 }), i*80)); },
+  deny(){ Sound.tone(180, { dur:.22, gain:.1, type:"triangle" }); },
+  sleep(){ Sound.tone(330, { dur:1.1, gain:.09, glide:165, type:"sine" }); }
 };
 
 /* ==========================================================================
    朗读
    ========================================================================== */
 const TTS = {
-  voice: null,
+  voice:null,
   pick(){
     try {
       if (!("speechSynthesis" in window)) return;
       const vs = speechSynthesis.getVoices();
       if (!vs.length) return;
-      for (const name of ["Google US English", "Microsoft Aria", "Microsoft Zira", "Samantha"]) {
+      for (const name of ["Google US English","Microsoft Aria","Microsoft Zira","Samantha"]) {
         const v = vs.find(x => x.name && x.name.indexOf(name) >= 0);
         if (v) { this.voice = v; return; }
       }
@@ -703,8 +823,7 @@ const TTS = {
       if (!("speechSynthesis" in window)) return;
       speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(text);
-      u.lang = "en-US";
-      u.rate = rate || 0.86;
+      u.lang = "en-US"; u.rate = rate || 0.86;
       if (this.voice) u.voice = this.voice;
       speechSynthesis.speak(u);
     } catch (e) {}
@@ -718,339 +837,469 @@ try {
 } catch (e) {}
 
 /* ==========================================================================
-   棋盘
-   --------------------------------------------------------------------------
-   关键不变量：棋盘上每个 wid 恰好两个方块，一个 en 一个 zh。
-   破了这条就会出现永远配不掉的孤块。
-
-   手感上的关键决定：模型（B.grid / B.all）**同步**更新，只有视觉是异步的。
-   所以永远不需要用 busy 锁住输入 —— 这正是旧版「点了没反应」的根源。
+   资源栏
    ========================================================================== */
-const B = { cols: 4, rows: 6, grid: [], all: [], sel: null, nextId: 1 };
-
-const boardEl = $("board");
-
-function makeTile(wid, type, star){
-  const w = WORDS[wid];
-  const t = {
-    id: B.nextId++, wid: wid, type: type,
-    text: type === "en" ? w.en : w.zh,
-    star: !!star, bomb: false, col: 0, row: 0, el: null, dead: false
-  };
-  B.all.push(t);          // 必须在建方块时就登记，renderBoard 靠 B.all 遍历
-  return t;
+function visibleRes(){
+  return RES_ORDER.filter(k => S.res[k] > 0 || k === "wood" || k === "stone" || k === "fiber");
 }
-
-function onBoardWid(wid){
-  for (const t of B.all) if (t.wid === wid && !t.dead) return true;
-  return false;
-}
-
-function buildBoard(){
-  for (const t of B.all) if (t.el && t.el.parentNode) t.el.parentNode.removeChild(t.el);
-  B.all = []; B.sel = null; B.nextId = 1;
-  B.cols = S.cols; B.rows = S.rows;
-  boardEl.style.setProperty("--cols", B.cols);
-  boardEl.style.setProperty("--rows", B.rows);
-  B.grid = [];
-  for (let c = 0; c < B.cols; c++) B.grid.push([]);
-
-  const pairs = Math.floor(B.cols * B.rows / 2);
-  const pool = shuffled(WORDS).slice(0, pairs);
-  const tiles = [];
-  for (const w of pool) {
-    tiles.push(makeTile(w.id, "en", false));
-    tiles.push(makeTile(w.id, "zh", false));
-  }
-  const bag = shuffled(tiles);
-  let k = 0;
-  for (let c = 0; c < B.cols; c++) {
-    for (let r = 0; r < B.rows; r++) {
-      const t = bag[k++];
-      if (t) { t.col = c; t.row = r; B.grid[c].push(t); }
+function renderRes(){
+  const bar = $("resBar");
+  const want = visibleRes();
+  const have = [...bar.children].map(c => c.dataset.k);
+  if (want.join(",") !== have.join(",")) {
+    bar.innerHTML = "";
+    for (const k of want) {
+      const d = document.createElement("div");
+      d.className = "res";
+      d.dataset.k = k;
+      d.innerHTML = '<span class="em">' + RES[k].e + '</span><span class="v">0</span>' +
+                    '<small>' + esc(RES[k].zh) + '</small>';
+      bar.appendChild(d);
     }
   }
-  // 撒几个幸运方块
-  const stars = Math.random() < .5 ? 1 : 2;
-  for (let i = 0; i < stars; i++) {
-    const t = pick(B.all.filter(x => !x.star)) || B.all[0];
-    if (t) t.star = true;
-  }
-  ensureSpecials();
-  renderBoard(true);
-}
-
-/* 特殊方块：场上常驻 0~2 个 💥，配对时炸掉周围一圈 */
-function ensureSpecials(){
-  const have = B.all.filter(t => t.bomb && !t.dead).length;
-  if (have >= 2) return;
-  if (Math.random() > .5) return;
-  const cand = B.all.filter(t => !t.dead && !t.bomb && !t.star);
-  if (!cand.length) return;
-  const t = pick(cand);
-  t.bomb = true;
-  if (t.el) t.el.classList.add("bomb");
-}
-
-function renderBoard(instant){
-  for (const t of B.all) spawnTile(t, instant, instant ? 0 : B.rows);
-  layoutAll(instant);
-}
-
-function spawnTile(t, instant, fromRows){
-  if (t.el) return;
-  const el = document.createElement("div");
-  el.className = "tile " + t.type + (t.star ? " star" : "") + (t.bomb ? " bomb" : "");
-  el.dataset.id = t.id;
-  const face = document.createElement("div");
-  face.className = "face";
-  face.textContent = t.text;
-  el.appendChild(face);
-  el.style.transform = "translate(" + (t.col * 100) + "%," + ((t.row - (fromRows || 0)) * 100) + "%)";
-  boardEl.appendChild(el);
-  t.el = el;
-}
-
-function fontFor(text, isEn, w, h){
-  const n = Math.max(1, text.length);
-  const byH = h * 0.34;
-  const byW = isEn ? w / (n * 0.56) : (n <= 3 ? w / n : (w * 2) / n);
-  return Math.max(9, Math.min(byH, byW, 21));
-}
-
-function layoutAll(instant){
-  const W = 100 / B.cols, H = 100 / B.rows;
-  const bw = boardEl.clientWidth / B.cols;
-  const bh = boardEl.clientHeight / B.rows;
-  for (const t of B.all) {
-    if (!t.el) continue;
-    t.el.style.transition = instant ? "none" : "";
-    t.el.style.width = W + "%";
-    t.el.style.height = H + "%";
-    const f = t.el.firstChild;
-    if (f) f.style.fontSize = fontFor(t.text, t.type === "en", bw - 8, bh - 8) + "px";
-    t.el.style.transform = "translate(" + (t.col * 100) + "%," + (t.row * 100) + "%)";
-  }
-  if (instant) {
-    void boardEl.offsetWidth;
-    for (const t of B.all) if (t.el) t.el.style.transition = "";
+  for (const c of bar.children) {
+    const k = c.dataset.k;
+    const v = c.querySelector(".v");
+    const nv = String(S.res[k]);
+    if (v.textContent !== nv) v.textContent = nv;
   }
 }
-
-function placeAll(){
-  for (let c = 0; c < B.cols; c++) {
-    const col = B.grid[c];
-    for (let r = 0; r < col.length; r++) { col[r].col = c; col[r].row = r; }
-  }
+function flashRes(k){
+  const c = [...$("resBar").children].find(x => x.dataset.k === k);
+  if (!c) return;
+  c.classList.remove("flash");
+  void c.offsetWidth;
+  c.classList.add("flash");
 }
 
-function clearEl(t){
-  if (t.el && t.el.parentNode) t.el.parentNode.removeChild(t.el);
-  t.el = null;
-  const i = B.all.indexOf(t);
-  if (i >= 0) B.all.splice(i, 1);
+/* ==========================================================================
+   地图
+   ========================================================================== */
+function renderMap(){
+  const sea = $("sea");
+  for (const el of [...sea.querySelectorAll(".spot, #bottle")]) el.remove();
+
+  for (const z of ZONES) {
+    const open = !!S.zones[z.id];
+    const b = document.createElement("button");
+    b.className = "spot " + (open ? "open" : "locked");
+    b.style.left = ({ beach:"27%", jungle:"40%", cave:"76%", peak:"56%" })[z.id];
+    b.style.top  = ({ beach:"76%", jungle:"46%", cave:"58%", peak:"20%" })[z.id];
+    b.innerHTML = '<span class="bub">' + (open ? z.e : "🔒") + '</span>' +
+                  '<span class="nm">' + esc(open ? z.n : "???") + '</span>';
+    b.onclick = () => {
+      Sound.wake();
+      if (!S.zones[z.id]) { Sfx.deny(); toast("还没路过去。先造点东西。", 1500); return; }
+      enterZone(z.id);
+    };
+    sea.appendChild(b);
+  }
+
+  // 漂流瓶：一天漂来一个。位置当天固定，而且只在外圈的海面上，
+  // 免得压在区域按钮底下点不着。
+  if (S.bottleDay < S.day && WORDS.length) {
+    if (!S.bottlePos || !S.bottlePos.length) {
+      const edge = rnd(4), t = 22 + Math.random() * 56;
+      S.bottlePos = edge === 0 ? [4, t] : edge === 1 ? [96, t]
+                  : edge === 2 ? [t, 4] : [t, 96];
+      save();
+    }
+    const b = document.createElement("div");
+    b.id = "bottle";
+    b.textContent = "🍾";
+    b.style.left = S.bottlePos[0] + "%";
+    b.style.top = S.bottlePos[1] + "%";
+    b.onclick = () => {
+      Sound.wake();
+      // 优先给还没捞到过的词
+      const fresh = WORDS.filter(w => S.words.indexOf(w.en) < 0);
+      const w = fresh.length ? pick(fresh) : pick(WORDS);
+      $("botEn").textContent = w.en;
+      $("botZh").textContent = w.zh;
+      $("botSay").onclick = () => TTS.say(w.en);
+      openOvl("ovlBottle");
+      TTS.say(w.en);
+      S.bottleDay = S.day;
+      S.bottlePos = null;
+      if (S.words.indexOf(w.en) < 0) S.words.push(w.en);
+      saveNow();
+      renderDiary();
+      b.remove();
+    };
+    sea.appendChild(b);
+  }
+
+  renderGoal();
 }
 
-/* 补块：新方块必须成对出现 */
-function refill(){
-  const holes = [];
-  for (let c = 0; c < B.cols; c++) {
-    const miss = B.rows - B.grid[c].length;
-    for (let k = 0; k < miss; k++) holes.push(c);
+function renderGoal(){
+  // 只指路指得通的：缺的资源必须现在就能采到，
+  // 否则会出现「让你去造要竹子的羊圈，而竹子还没解锁」这种死指路
+  const next = BUILDS.find(b => !S.built[b.id] && !firstMissingZone(b.cost));
+  const el = $("goalTxt");
+  if (!next) { el.innerHTML = "岛上该建的都建好了 🌿"; return; }
+  const can = affordable(next.cost);
+  const parts = [];
+  for (const k in next.cost) {
+    const need = next.cost[k], have = S.res[k];
+    parts.push('<i style="font-style:normal;' + (have >= need ? "opacity:.6" : "color:#ff97a8") + '">' +
+               RES[k].e + " " + have + "/" + need + '</i>');
   }
-  if (!holes.length) return;
-  if (holes.length % 2) holes.pop();          // 防御：不变量要求偶数
+  el.innerHTML = '造 <b>' + next.e + " " + esc(next.n) + "</b>（" + esc(next.d) + "）" +
+                 '<div style="margin-top:5px">' + parts.join(" &nbsp; ") + "</div>" +
+                 (can ? '<div style="margin-top:6px;color:#8fe0a8">材料够了，去营地造 →</div>' : "");
+}
 
-  const need = holes.length / 2;
-  const avail = shuffled(WORDS.filter(w => !onBoardWid(w.id)));
-  const pool = avail.length >= need ? avail : shuffled(WORDS);
+/* ==========================================================================
+   区域 / 采集
+   ========================================================================== */
+let curZone = null;
+const cool = {};      // 采集点冷却（不存档，重开就恢复）
 
-  const fresh = [];
-  for (let i = 0; i < need; i++) {
-    const w = pool[i % pool.length];
-    const enFirst = Math.random() < .5;
-    fresh.push(makeTile(w.id, enFirst ? "en" : "zh", false));
-    fresh.push(makeTile(w.id, enFirst ? "zh" : "en", false));
-  }
-  const bag = shuffled(fresh).slice(0, holes.length);
-
-  const byCol = new Map();
-  holes.forEach((c, i) => {
-    if (!byCol.has(c)) byCol.set(c, []);
-    if (bag[i]) byCol.get(c).push(bag[i]);
+function enterZone(id){
+  curZone = ZONES.find(z => z.id === id);
+  if (!curZone) return;
+  $("zoneName").innerHTML = esc(curZone.n) + '<span class="en">' + esc(curZone.en) + "</span>";
+  const scene = $("scene");
+  scene.style.background = curZone.sky;
+  scene.innerHTML = "";
+  curZone.nodes.forEach((nd, i) => {
+    const key = id + ":" + i;
+    const b = document.createElement("button");
+    b.className = "node";
+    b.dataset.key = key;
+    b.dataset.r = nd.r;
+    b.style.left = nd.p[0] + "%";
+    b.style.top = nd.p[1] + "%";
+    b.innerHTML = RES[nd.r].e +
+      '<span class="tagname">' + esc(RES[nd.r].en) + "</span>";
+    if (cool[key]) b.classList.add("cool");
+    scene.appendChild(b);
   });
-  for (const [c, list] of byCol) B.grid[c] = list.concat(B.grid[c]);
-
-  for (const t of bag) spawnTile(t, false, B.rows);
-  placeAll();
-  // 先让浏览器认下「在棋盘上方」这个起始位置，落下动画才会真的播
-  void boardEl.offsetWidth;
-  layoutAll(false);
+  $("zoneHint").textContent = curZone.hint;
+  showScreen("Zone");
+  renderRes();
 }
 
-function mateOf(t){
-  for (const x of B.all) {
-    if (x !== t && !x.dead && x.wid === t.wid && x.type !== t.type) return x;
+function onGather(btn){
+  if (!btn || btn.classList.contains("cool")) return;
+  Sound.wake();
+  const key = btn.dataset.key, r = btn.dataset.r;
+
+  const isNew = S.res[r] === 0;
+  const amount = 1 + (Math.random() < 0.3 ? 1 : 0);
+  S.res[r] += amount;
+  S.gathered++;
+
+  learn(r);
+  save();
+
+  btn.classList.remove("pop"); void btn.offsetWidth; btn.classList.add("pop");
+  btn.classList.add("cool");
+  cool[key] = true;
+  setTimeout(() => {
+    cool[key] = false;
+    if (curZone && btn.parentNode) btn.classList.remove("cool");
+  }, 3000);
+
+  Sfx.gather();
+  buzz(9);
+  const rc = btn.getBoundingClientRect();
+  flyText(rc.left + rc.width / 2, rc.top, "+" + amount + " " + RES[r].e);
+  petal(rc.left + rc.width / 2, rc.top + rc.height / 2);
+  renderRes();
+  flashRes(r);
+  TTS.say(RES[r].en);
+  if (isNew) { toast("第一次见到 " + RES[r].en + " · " + RES[r].zh, 1900); renderDiary(); }
+  renderGoal();
+}
+
+/* ==========================================================================
+   营地
+   ========================================================================== */
+function affordable(cost){
+  for (const k in cost) if (S.res[k] < cost[k]) return false;
+  return true;
+}
+
+/* 见过一次就记进日记。蛋和奶是睡觉产出的，不走采集那条路，所以两边都要调它。 */
+function learn(k){
+  if (RES[k] && S.seen.indexOf(RES[k].en) < 0) S.seen.push(RES[k].en);
+}
+
+/* 现在能采到哪些资源 —— 决定「还差材料」和「这材料你根本还没地方弄」是两回事 */
+function reachable(){
+  const set = {};
+  for (const z of ZONES)
+    if (S.zones[z.id]) for (const n of z.nodes) set[n.r] = true;
+  return set;
+}
+function firstMissingZone(cost){
+  const have = reachable();
+  for (const k in cost) {
+    if (have[k]) continue;
+    for (const z of ZONES)
+      if (!S.zones[z.id])
+        for (const n of z.nodes)
+          if (n.r === k) return z;
   }
   return null;
 }
 
-function neighborsOf(t){
-  const out = [];
-  for (const d of [[0, -1], [0, 1], [-1, 0], [1, 0]]) {
-    const c = t.col + d[0], r = t.row + d[1];
-    if (c < 0 || c >= B.cols) continue;
-    const col = B.grid[c];
-    if (r < 0 || r >= col.length) continue;
-    if (col[r]) out.push(col[r]);
+function buildRow(item, verb){
+  const done = !!S.built[item.id];
+  const blocked = done ? null : firstMissingZone(item.cost);
+  const can = !done && !blocked && affordable(item.cost);
+
+  const row = document.createElement("div");
+  row.className = "brow";
+
+  const em = document.createElement("div");
+  em.className = "em";
+  em.textContent = done ? item.e : "❔";
+  row.appendChild(em);
+
+  const tx = document.createElement("div");
+  tx.className = "txt";
+  let inner = "<b>" + esc(done ? item.n : "???") + "<i>" + esc(done ? item.en : "") + "</i></b>" +
+              "<span>" + esc(item.d) + "</span>";
+  if (!done) {
+    const ps = [];
+    for (const k in item.cost) {
+      const ok = S.res[k] >= item.cost[k];
+      ps.push('<i class="' + (ok ? "" : "no") + '">' + RES[k].e + " " +
+              S.res[k] + "/" + item.cost[k] + "</i>");
+    }
+    inner += '<div class="cost">' + ps.join("") + "</div>";
+    if (blocked)
+      inner += '<div class="cost" style="color:#ffd07a">材料在「' + esc(blocked.n) + "」，还没路过去</div>";
   }
-  return out;
+  tx.innerHTML = inner;
+  row.appendChild(tx);
+
+  const act = document.createElement("button");
+  act.className = "act";
+  if (done) { act.classList.add("done"); act.textContent = "已完成"; act.disabled = true; }
+  else if (can) { act.textContent = verb; act.onclick = () => doBuild(item); }
+  else { act.classList.add("no"); act.textContent = blocked ? "还没路" : "材料不够"; act.disabled = true; }
+  row.appendChild(act);
+  return row;
 }
 
-/* ==========================================================================
-   点击
-   ========================================================================== */
-function onTap(t){
-  if (!t || t.dead || t.el === null) return;
-  Audio2.wake();
-  clearHint();
+function renderCamp(){
+  const list = $("buildList");
+  list.innerHTML = "";
+  for (const b of BUILDS) list.appendChild(buildRow(b, "建造"));
 
-  if (B.sel === t) {
-    t.el.classList.remove("sel");
-    B.sel = null;
-    Sfx.soft();
+  const cl = $("craftList");
+  cl.innerHTML = "";
+  for (const c of CRAFTS) cl.appendChild(buildRow(c, "做"));
+
+  $("sleepHint").textContent = "现在是第 " + S.day + " 天";
+  renderCampScene();
+  renderLife();
+}
+
+/* 营地一览：建过的东西按顺序排出来。这是「养成」里最直给的那部分 —— 看得见。 */
+function renderCampScene(){
+  const box = $("campScene");
+  box.innerHTML = "";
+  const items = BUILDS.concat(CRAFTS).filter(x => S.built[x.id]);
+  if (!items.length) {
+    box.innerHTML = '<div style="opacity:.5;font-size:12.5px;line-height:1.6">' +
+                    "这里还空着。<br>先去沙滩捡点木头 🪵 吧</div>";
     return;
   }
+  for (const it of items) {
+    const c = document.createElement("div");
+    c.className = "chip";
+    c.innerHTML = '<span class="ce">' + it.e + '</span><span class="cn">' + esc(it.n) + "</span>";
+    c.onclick = () => { Sound.wake(); TTS.say(it.en); };
+    box.appendChild(c);
+  }
+}
 
-  if (!B.sel) {
-    B.sel = t;
-    t.el.classList.add("sel");
-    if (t.type === "en") { Sfx.tapEn(); TTS.say(WORDS[t.wid].en); }
-    else Sfx.tapZh();
+function doBuild(b){
+  if (S.built[b.id] || !affordable(b.cost)) { Sfx.deny(); return; }
+  Sound.wake();
+  for (const k in b.cost) S.res[k] -= b.cost[k];
+  S.built[b.id] = true;
+
+  if (b.unlock === "win") { S.won = true; saveNow(); showEnd(); return; }
+
+  if (b.unlock) {
+    S.zones[b.unlock] = true;
+    const z = ZONES.find(x => x.id === b.unlock);
+    Sfx.unlock();
+    confetti(26);
+    buzz([20, 40, 20]);
+    toast("🎉 " + b.e + " " + b.n + " 建好了！<br>通往「" + z.n + "」的路开了", 3000);
+  } else {
+    Sfx.build();
+    confetti(12);
+    toast(b.e + " " + b.n + " 建好了", 1700);
+  }
+  saveNow();
+  renderRes(); renderCamp(); renderGoal(); renderMap();
+}
+
+function renderLife(){
+  const card = $("lifeCard");
+  const box = $("lifeBox");
+  const hasFarm = !!S.built.farm, hasCoop = !!S.built.coop, hasPen = !!S.built.pen;
+  if (!hasFarm && !hasCoop && !hasPen) { card.style.display = "none"; return; }
+  card.style.display = "";
+  box.innerHTML = "";
+
+  if (hasFarm) {
+    const t = document.createElement("div");
+    t.style.cssText = "font-size:12.5px;opacity:.7;margin-bottom:7px";
+    t.textContent = "农田 · 种浆果（1 颗浆果 = 1 块地，睡一觉就长好，收 3 颗）";
+    box.appendChild(t);
+    const g = document.createElement("div");
+    g.className = "farm";
+    S.farm.forEach((slot, i) => {
+      const p = document.createElement("button");
+      p.className = "plot";
+      p.dataset.i = i;
+      if (!slot) { p.innerHTML = '<span>➕</span><small>空地</small>'; }
+      else if (S.day - slot.day >= 1) { p.classList.add("ready"); p.innerHTML = '<span>🫐</span><small>可以收了</small>'; }
+      else { p.innerHTML = '<span>🌱</span><small>长着…</small>'; }
+      g.appendChild(p);
+    });
+    box.appendChild(g);
+  }
+
+  const rows = [];
+  if (hasCoop) rows.push({ e:"🐔", t:"鸡舍", en:"Coop", s:"每天自动下一个蛋 · 已攒 " + S.res.egg + " 个" });
+  if (hasPen)  rows.push({ e:"🐐", t:"羊圈", en:"Pen",  s:"每天自动挤一瓶奶 · 已攒 " + S.res.milk + " 瓶" });
+  for (const r of rows) {
+    const d = document.createElement("div");
+    d.className = "brow";
+    d.innerHTML = '<div class="em">' + r.e + '</div><div class="txt"><b>' + esc(r.t) +
+                  '<i>' + esc(r.en) + '</i></b><span>' + esc(r.s) + "</span></div>";
+    box.appendChild(d);
+  }
+}
+
+function onFarmTap(i){
+  Sound.wake();
+  const slot = S.farm[i];
+  if (!slot) {
+    if (S.res.berry < 1) { Sfx.deny(); toast("没有浆果种子。去丛林采 🫐", 1600); return; }
+    S.res.berry -= 1;
+    S.farm[i] = { day: S.day };
+    Sfx.plant();
+    toast("种下了，睡一觉就长好 🌱", 1500);
+  } else if (S.day - slot.day >= 1) {
+    S.farm[i] = null;
+    S.res.berry += 3;
+    Sfx.harvest();
+    confetti(8);
+    toast("收了 3 颗 🫐", 1400);
+  } else {
+    Sfx.deny();
+    toast("还没长好，去睡一觉", 1400);
     return;
   }
-
-  const a = B.sel;
-  if (a.wid === t.wid && a.type !== t.type) {
-    a.el.classList.remove("sel");
-    B.sel = null;
-    doMatch(a, t);
-  } else {
-    a.el.classList.remove("sel");
-    B.sel = null;
-    doMiss(a, t);
-  }
+  saveNow();
+  renderRes(); renderLife(); renderGoal();
 }
 
-let combo = 0;
-
-function doMatch(a, b){
-  combo++;
-  if (combo > S.best) { S.best = combo; }
-
-  const w = WORDS[a.wid];
-  const gain = Math.round((3 + Math.min(combo, 10)) * ((a.star || b.star) ? 3 : 1));
-
-  const victims = [a, b];
-  if (a.bomb || b.bomb) {
-    Sfx.boom(); buzz([14, 28, 20]);
-    for (const t of [a, b]) {
-      for (const nb of neighborsOf(t)) if (nb !== a && nb !== b) victims.push(nb);
-    }
-    for (const v of victims.slice()) {
-      const m = mateOf(v);
-      if (m && victims.indexOf(m) < 0) victims.push(m);
-    }
-  } else {
-    Sfx.match(combo);
-    buzz(12);
-  }
-
-  // ---- 模型同步更新（这一步之后，输入立刻可以继续） ----
-  for (const t of victims) { t.dead = true; if (t.el) t.el.classList.add("pop"); }
-  for (let c = 0; c < B.cols; c++) B.grid[c] = B.grid[c].filter(t => !t.dead);
-  setTimeout(() => { for (const t of victims) clearEl(t); }, 300);
-
-  S.sun += gain;
-  S.matches++;
-  if (S.seen.indexOf(w.en) < 0) S.seen.push(w.en);
-  save();
-
-  // 头一回玩，引导去花园，否则容易只消不懂养成
-  if (S.matches === 5 && Object.keys(S.owned).length <= 1) {
-    setTimeout(() => toast("攒够 ☀️ 了！去【花园】解锁第一朵花 🌼", 3000), 900);
-  }
-
-  // ---- 视觉 / 听觉 ----
-  const r = a.el ? a.el.getBoundingClientRect() : null;
-  if (r) flyText(r.left + r.width / 2, r.top + r.height / 2, "+" + gain + " ☀️");
-  if (r) burst(victims.length > 2 ? 14 : 5, r.left + r.width / 2, r.top + r.height / 2);
-  if (combo >= 3) showCombo(combo);
-  if (combo > 0 && combo % 5 === 0) { confetti(18); Sfx.coin(); }
-  buzz(10);
-
-  refill();
-  ensureSpecials();
-  updateHud();
-
-  if (combo === 1) TTS.say(w.en, 0.9);
-  else if (Math.random() < .5) TTS.say(w.en, 0.92);
-}
-
-function doMiss(a, b){
-  combo = 0;
-  Sfx.soft();
-  buzz([10, 30, 10]);
-
-  const w = WORDS[a.wid];
-  if (S.seen.indexOf(w.en) < 0) { S.seen.push(w.en); save(); }
-
-  // 轻轻晃一下，不扣任何东西
-  for (const t of [a, b]) {
-    if (!t.el) continue;
-    t.el.classList.add("bad");
-    setTimeout(() => { if (t.el) t.el.classList.remove("bad"); }, 460);
-  }
-  hintPair(a, mateOf(a));
-  // 告诉答案，但语气是「顺便告诉你」
-  toast(w.en + " = " + w.zh, 1500);
-  TTS.say(w.en, 0.82);
-  updateHud();
+function doSleep(){
+  Sound.wake();
+  Sfx.sleep();
+  S.day++;
+  for (const k in cool) cool[k] = false;
+  if (S.built.coop) { S.res.egg += 1; learn("egg"); }
+  if (S.built.pen)  { S.res.milk += 1; learn("milk"); }
+  if (S.built.well && S.day % 2 === 0) { S.res.spring += 1; learn("spring"); }
+  saveNow();
+  toast("🌙 第 " + S.day + " 天", 1600);
+  if (curZone) for (const n of document.querySelectorAll("#scene .node")) n.classList.remove("cool");
+  renderRes(); renderCamp(); renderGoal(); renderMap();
 }
 
 /* ==========================================================================
-   提示
+   日记
    ========================================================================== */
-let hintT = null, hintTimer = null;
-function hintPair(x, y){
-  clearHint();
-  const arr = [x, y].filter(Boolean);
-  if (!arr.length) return;
-  hintT = arr;
-  for (const t of arr) if (t.el) t.el.classList.add("hintpair");
-  if (hintTimer) clearTimeout(hintTimer);
-  hintTimer = setTimeout(clearHint, 2000);
-}
-function clearHint(){
-  if (hintTimer) { clearTimeout(hintTimer); hintTimer = null; }
-  if (!hintT) return;
-  for (const t of hintT) if (t.el) t.el.classList.remove("hintpair");
-  hintT = null;
-}
-function autoHint(){
-  if (B.sel || hintT) return;
-  const live = B.all.filter(t => !t.dead && t.type === "en");
-  if (!live.length) return;
-  const t = pick(live);
-  const m = mateOf(t);
-  if (m) hintPair(t, m);
+const DIARY = ["wood","stone","fiber","shell","coconut","bamboo","vine","berry","clay",
+               "crystal","flower","feather","spring","egg","milk"];
+function renderDiary(){
+  const g = $("diaryGrid");
+  g.innerHTML = "";
+  let n = 0;
+  for (const k of DIARY) {
+    const d = RES[k];
+    const has = S.seen.indexOf(d.en) >= 0;
+    const c = document.createElement("div");
+    c.className = "dcard" + (has ? "" : " locked");
+    c.innerHTML = '<div class="em">' + (has ? d.e : "❔") + '</div><div class="tx">' +
+                  '<div class="en">' + esc(has ? d.en : "• • •") + "</div>" +
+                  '<div class="zh">' + esc(has ? d.zh : "还没见过") + "</div></div>";
+    if (has) { n++; c.onclick = () => { Sound.wake(); TTS.say(d.en); }; }
+    g.appendChild(c);
+  }
+  $("diaryCount").textContent = n + " / " + DIARY.length;
+
+  // 捞到的词
+  const wg = $("wordGrid");
+  wg.innerHTML = "";
+  const got = WORDS.filter(w => S.words.indexOf(w.en) >= 0);
+  for (const w of got) {
+    const c = document.createElement("div");
+    c.className = "dcard";
+    c.innerHTML = '<div class="em">✍️</div><div class="tx">' +
+                  '<div class="en">' + esc(w.en) + "</div>" +
+                  '<div class="zh">' + esc(w.zh) + "</div></div>";
+    c.onclick = () => { Sound.wake(); TTS.say(w.en); };
+    wg.appendChild(c);
+  }
+  if (!got.length) {
+    const c = document.createElement("div");
+    c.className = "dcard locked";
+    c.style.gridColumn = "span 2";
+    c.innerHTML = '<div class="em">🍾</div><div class="tx"><div class="en">还没有</div>' +
+                  '<div class="zh">去地图上捡漂流瓶</div></div>';
+    wg.appendChild(c);
+  } else if (got.length < WORDS.length) {
+    const c = document.createElement("div");
+    c.className = "dcard locked";
+    c.style.gridColumn = "span 2";
+    c.innerHTML = '<div class="em">🌊</div><div class="tx"><div class="en">还有 ' +
+                  (WORDS.length - got.length) + ' 个词</div>' +
+                  '<div class="zh">一天漂来一个瓶子</div></div>';
+    wg.appendChild(c);
+  }
+  $("wordCount").textContent = got.length + " / " + WORDS.length;
+  return n;
 }
 
 /* ==========================================================================
-   视觉特效
+   界面
    ========================================================================== */
-const PETALS = ["🌸", "🌼", "✨", "🌿", "💚"];
+function showScreen(name){
+  for (const s of document.querySelectorAll(".scr")) s.classList.toggle("on", s.id === "scr" + name);
+  for (const b of document.querySelectorAll("#tabs button")) b.classList.toggle("on", b.dataset.scr === name);
+  if (name === "Camp") renderCamp();
+  if (name === "Diary") renderDiary();
+  if (name === "Map") renderMap();
+}
 
+function showEnd(){
+  const msg = CONFIG.endMessage
+    .replace("%DAY%", S.day)
+    .replace("%GATHER%", S.gathered)
+    .replace("%WORDS%", S.seen.length + S.words.length);
+  $("endMsg").innerHTML = msg;
+  Sfx.unlock();
+  confetti(60);
+  openOvl("ovlEnd");
+}
+
+/* ==========================================================================
+   特效
+   ========================================================================== */
 function flyText(x, y, txt){
   const d = document.createElement("div");
   d.className = "fx";
@@ -1060,307 +1309,137 @@ function flyText(x, y, txt){
   document.body.appendChild(d);
   try {
     d.animate(
-      [{ transform: "translate(-50%,-50%) scale(.7)", opacity: 0 },
-       { transform: "translate(-50%,-120%) scale(1.15)", opacity: 1, offset: .3 },
-       { transform: "translate(-50%,-260%) scale(1)", opacity: 0 }],
-      { duration: 1000, easing: "cubic-bezier(.2,.8,.3,1)" }
+      [{ transform:"translate(-50%,-50%) scale(.7)", opacity:0 },
+       { transform:"translate(-50%,-130%) scale(1.12)", opacity:1, offset:.3 },
+       { transform:"translate(-50%,-280%) scale(1)", opacity:0 }],
+      { duration: 950, easing:"cubic-bezier(.2,.8,.3,1)" }
     ).onfinish = () => d.remove();
   } catch (e) { setTimeout(() => d.remove(), 900); }
 }
-
-function burst(n, x, y){
-  for (let i = 0; i < n; i++) petal(x, y, 90);
-}
-function confetti(n){
-  for (let i = 0; i < n; i++) petal(window.innerWidth / 2, 0, 260);
-}
-function petal(x, y, spread){
+const PETALS = ["🌿","✨","🍃","💧","🌺"];
+function petal(x, y){
   const d = document.createElement("div");
   d.className = "pt";
   d.textContent = pick(PETALS);
   d.style.left = x + "px";
   d.style.top = y + "px";
   document.body.appendChild(d);
-  const dx = (Math.random() - .5) * spread * 2;
-  const dy = (Math.random() * spread) + 40;
-  const rot = (Math.random() - .5) * 540;
+  const dx = (Math.random() - .5) * 130, dy = 50 + Math.random() * 90;
   try {
     d.animate(
-      [{ transform: "translate(-50%,-50%) rotate(0deg) scale(.6)", opacity: 1 },
-       { transform: "translate(calc(-50% + " + dx + "px),calc(-50% + " + dy + "px)) rotate(" + rot + "deg) scale(1)", opacity: 0 }],
-      { duration: 900 + Math.random() * 700, easing: "cubic-bezier(.25,.7,.4,1)" }
+      [{ transform:"translate(-50%,-50%) scale(.6)", opacity:1 },
+       { transform:"translate(calc(-50% + " + dx + "px),calc(-50% + " + dy + "px)) rotate(" +
+         ((Math.random()-.5)*420) + "deg) scale(1)", opacity:0 }],
+      { duration: 800 + Math.random() * 500, easing:"cubic-bezier(.25,.7,.4,1)" }
     ).onfinish = () => d.remove();
-  } catch (e) { setTimeout(() => d.remove(), 1200); }
+  } catch (e) { setTimeout(() => d.remove(), 1100); }
 }
-
-function showCombo(n){
-  const el = $("comboTag");
-  const words = { 3: "不错", 5: "连击 5", 8: "连击 8", 12: "连击 12", 16: "顺得离谱", 20: "无敌了" };
-  el.textContent = words[n] || ("连击 " + n + " 🔥");
-  el.classList.remove("show");
-  void el.offsetWidth;
-  el.classList.add("show");
-}
-
-/* ==========================================================================
-   界面
-   ========================================================================== */
-function updateHud(){
-  $("hudSun").textContent = S.sun;
-  const w = $("hudCmbWrap");
-  $("hudCmb").textContent = combo;
-  w.classList.toggle("off", combo < 2);
-  $("playCount").textContent = "已消 " + S.matches + " 对";
-}
-
-function showScreen(name){
-  for (const s of document.querySelectorAll(".scr")) s.classList.toggle("on", s.id === "scr" + name.charAt(0).toUpperCase() + name.slice(1));
-  for (const b of document.querySelectorAll("#tabs button")) b.classList.toggle("on", b.dataset.scr === name);
-  if (name === "garden") renderGarden();
-  if (name === "dex") renderDex();
-  if (name === "play") setTimeout(() => layoutAll(true), 30);
-}
-
-/* ---------- 花园 ---------- */
-function renderGarden(){
-  const lawn = $("lawn");
-  lawn.innerHTML = "";
-  let filled = 0;
-  for (let i = 0; i < PLOTS; i++) {
-    const id = S.plots[i];
-    const b = document.createElement("button");
-    b.className = "plot" + (id ? " filled" : "");
-    b.dataset.i = i;
-    if (id) {
-      const d = DECOS.find(x => x.id === id);
-      const sp = document.createElement("span");
-      sp.className = "sw";
-      sp.textContent = d ? d.e : "🌱";
-      sp.style.animationDelay = (Math.random() * 3.4).toFixed(2) + "s";
-      b.appendChild(sp);
-      filled++;
-    } else {
-      const sp = document.createElement("span");
-      sp.className = "plus";
-      sp.textContent = "+";
-      b.appendChild(sp);
-    }
-    lawn.appendChild(b);
-  }
-  $("gardenCount").textContent = filled + " / " + PLOTS;
-  renderShop();
-}
-
-function renderShop(){
-  const shop = $("shop");
-  shop.innerHTML = "";
-  let nextCost = null;
-  for (const d of DECOS) {
-    const owned = !!S.owned[d.id];
-    if (!owned && nextCost === null) nextCost = d.c - S.sun;
-    const row = document.createElement("div");
-    row.className = "shoprow";
-
-    const em = document.createElement("div");
-    em.className = "em";
-    em.textContent = owned ? d.e : "❔";
-    row.appendChild(em);
-
-    const nm = document.createElement("div");
-    nm.className = "nm";
-    nm.innerHTML = esc(owned ? d.n : "???") + "<small>" + esc(owned ? d.d : "还没解锁，慢慢来") + "</small>";
-    row.appendChild(nm);
-
-    const btn = document.createElement("button");
-    btn.className = "go";
-    if (owned) {
-      btn.classList.add("have");
-      btn.textContent = "已解锁";
-      btn.disabled = true;
-    } else if (S.sun >= d.c) {
-      btn.textContent = "☀️ " + d.c;
-      btn.onclick = () => unlock(d);
-    } else {
-      btn.classList.add("no");
-      btn.textContent = "☀️ " + d.c;
-      btn.disabled = true;
-    }
-    row.appendChild(btn);
-    shop.appendChild(row);
-  }
-  $("shopHint").textContent = nextCost !== null ? ("再消 " + Math.max(0, nextCost) + " ☀️ 解锁下一个") : "全解锁了 🌈";
-}
-
-function unlock(d){
-  if (S.owned[d.id] || S.sun < d.c) return;
-  S.sun -= d.c;
-  S.owned[d.id] = true;
-  saveNow();
-  Sfx.unlock();
-  confetti(22);
-  toast("解锁了 " + d.e + " " + d.n + "！去花园种下吧", 2200);
-  updateHud();
-  renderGarden();
-}
-
-/* ---------- 种东西 ---------- */
-let pickingPlot = -1;
-function openPick(i){
-  pickingPlot = i;
-  const grid = $("pickGrid");
-  grid.innerHTML = "";
-  for (const d of DECOS) {
-    if (!S.owned[d.id]) continue;
-    const b = document.createElement("button");
-    b.className = "pick" + (S.plots[i] === d.id ? " on" : "");
-    b.textContent = d.e;
-    b.title = d.n;
-    b.onclick = () => {
-      S.plots[i] = d.id;
-      Sfx.plant();
-      saveNow();
-      closeAll();
-      renderGarden();
-    };
-    grid.appendChild(b);
-  }
-  openOvl("ovlPick");
-}
-
-/* ---------- 图鉴 ---------- */
-function renderDex(){
-  const g = $("dexGrid");
-  g.innerHTML = "";
-  const seen = new Set(S.seen);
-  for (const w of WORDS) {
-    const has = seen.has(w.en);
-    const c = document.createElement("div");
-    c.className = "wcard" + (has ? "" : " locked");
-    c.innerHTML = '<div class="e">' + esc(has ? w.en : "• • •") + '</div>' +
-                  '<div class="z">' + esc(has ? w.zh : "还没遇到") + "</div>";
-    if (has) c.onclick = () => { Audio2.wake(); TTS.say(w.en); Sfx.soft(); };
-    g.appendChild(c);
-  }
-  $("dexCount").textContent = S.seen.length + " / " + WORDS.length;
-}
-
-/* ---------- 浮层 ---------- */
-function openOvl(id){ $(id).classList.add("on"); }
-function closeAll(){ for (const o of document.querySelectorAll(".ovl")) o.classList.remove("on"); }
-
-function renderSettings(){
-  for (const b of document.querySelectorAll("#segSize button")) {
-    b.classList.toggle("on", +b.dataset.c === S.cols && +b.dataset.r === S.rows);
-  }
-  setSeg("segMusic", S.music ? "1" : "0");
-  setSeg("segSfx", S.sfx ? "1" : "0");
-  setSeg("segTts", S.tts ? "1" : "0");
-}
-function setSeg(id, v){
-  for (const b of $(id).querySelectorAll("button")) b.classList.toggle("on", b.dataset.v === v);
+function confetti(n){
+  for (let i = 0; i < n; i++) petal(window.innerWidth / 2 + (Math.random()-.5)*180, 30);
 }
 
 /* ==========================================================================
    事件
    ========================================================================== */
-boardEl.addEventListener("click", e => {
-  const el = e.target.closest ? e.target.closest(".tile") : null;
-  if (!el) return;
-  const id = +el.dataset.id;
-  const t = B.all.find(x => x.id === id);
-  if (t) onTap(t);
+$("scene").addEventListener("click", e => {
+  const b = e.target.closest ? e.target.closest(".node") : null;
+  if (b) onGather(b);
+});
+$("lifeBox").addEventListener("click", e => {
+  const p = e.target.closest ? e.target.closest(".plot") : null;
+  if (p) onFarmTap(+p.dataset.i);
 });
 
 for (const b of document.querySelectorAll("#tabs button")) {
-  b.onclick = () => { Audio2.wake(); showScreen(b.dataset.scr); };
+  b.onclick = () => { Sound.wake(); showScreen(b.dataset.scr); };
 }
-
+$("btnBack").onclick = () => showScreen("Map");
+$("btnSleep").onclick = doSleep;
 $("btnSet").onclick = () => { renderSettings(); openOvl("ovlSet"); };
 $("ovlSet").onclick = e => { if (e.target === $("ovlSet")) closeAll(); };
-$("ovlPick").onclick = e => { if (e.target === $("ovlPick")) closeAll(); };
-$("pickClear").onclick = () => {
-  if (pickingPlot >= 0) { S.plots[pickingPlot] = null; saveNow(); }
-  closeAll();
-  renderGarden();
+$("ovlBottle").onclick = e => { if (e.target === $("ovlBottle")) closeAll(); };
+$("ovlEnd").onclick = e => { if (e.target === $("ovlEnd")) closeAll(); };
+
+$("btnSound").onclick = () => {
+  Sound.wake();
+  S.amb = S.amb === "waves" ? "rain" : (S.amb === "rain" ? "off" : "waves");
+  Sound.setAmb(S.amb);
+  saveNow();
+  updateSoundBtn();
+  renderSettings();
+  toast(S.amb === "waves" ? "🌊 海浪" : S.amb === "rain" ? "🌧 雨声" : "🔇 静音", 1200);
 };
-
-$("lawn").addEventListener("click", e => {
-  const b = e.target.closest ? e.target.closest(".plot") : null;
-  if (!b) return;
-  Audio2.wake();
-  openPick(+b.dataset.i);
-});
-
-for (const b of document.querySelectorAll("#segSize button")) {
-  b.onclick = () => {
-    S.cols = +b.dataset.c; S.rows = +b.dataset.r;
-    saveNow(); renderSettings(); buildBoard(); updateHud();
-    toast("棋盘改成 " + S.cols + "×" + S.rows + " 了", 1400);
-  };
+function updateSoundBtn(){
+  $("btnSound").textContent = S.amb === "waves" ? "🌊" : S.amb === "rain" ? "🌧" : "🔇";
 }
-for (const b of document.querySelectorAll("#segMusic button")) {
-  b.onclick = () => { S.music = b.dataset.v === "1"; saveNow(); Music.apply(); renderSettings(); };
+
+function renderSettings(){
+  for (const b of document.querySelectorAll("#segAmb button"))
+    b.classList.toggle("on", b.dataset.v === S.amb);
+  for (const b of document.querySelectorAll("#segSfx button"))
+    b.classList.toggle("on", (b.dataset.v === "1") === !!S.sfx);
+  for (const b of document.querySelectorAll("#segTts button"))
+    b.classList.toggle("on", (b.dataset.v === "1") === !!S.tts);
+}
+for (const b of document.querySelectorAll("#segAmb button")) {
+  b.onclick = () => { Sound.wake(); S.amb = b.dataset.v; Sound.setAmb(S.amb); saveNow();
+    updateSoundBtn(); renderSettings(); };
 }
 for (const b of document.querySelectorAll("#segSfx button")) {
-  b.onclick = () => { S.sfx = b.dataset.v === "1"; saveNow(); renderSettings(); if (S.sfx) Sfx.soft(); };
+  b.onclick = () => { S.sfx = b.dataset.v === "1"; saveNow(); renderSettings(); if (S.sfx) Sfx.gather(); };
 }
 for (const b of document.querySelectorAll("#segTts button")) {
   b.onclick = () => { S.tts = b.dataset.v === "1"; saveNow(); renderSettings(); if (S.tts) TTS.say("hello"); };
 }
 
 $("btnReset").onclick = () => {
-  if (!confirm("清空所有进度？花和阳光都没了。")) return;
+  if (!confirm("清空所有进度？建的、采的、日记里的都会没。")) return;
   S = JSON.parse(JSON.stringify(DEFAULTS));
   saveNow();
-  combo = 0;
   closeAll();
-  buildBoard(); updateHud(); renderSettings(); renderGarden(); renderDex();
-  toast("已经重来了 🌱", 1500);
+  for (const k in cool) delete cool[k];
+  renderRes(); renderMap(); renderCamp(); renderDiary(); renderSettings(); updateSoundBtn();
+  $("dayBadge").textContent = "第 1 天";
+  showScreen("Map");
+  toast("重新漂流一次 🌊", 1600);
 };
 
-// 卡住不动就提示
-let idleT = 0;
-setInterval(() => {
-  if (!$("scrPlay").classList.contains("on")) { idleT = 0; return; }
-  idleT++;
-  if (idleT >= 9) { idleT = 0; autoHint(); }
-}, 1000);
-document.addEventListener("pointerdown", () => { idleT = 0; }, true);
-
-window.addEventListener("resize", () => { if (B.all.length) layoutAll(true); });
-window.addEventListener("orientationchange", () => setTimeout(() => { if (B.all.length) layoutAll(true); }, 260));
-
-// 切出去只暂停音乐，绝不动进度（旧版这里会把整关卡掉）
+// 切出去只把声音压低，不动进度
 document.addEventListener("visibilitychange", () => {
   try {
-    if (document.hidden) {
-      if (Audio2.ready) Audio2.musicGain.gain.setTargetAtTime(0.0001, Audio2.ctx.currentTime, .4);
-      if ("speechSynthesis" in window) speechSynthesis.cancel();
-    } else {
-      Music.apply();
-    }
+    if (!Sound.ready) return;
+    const g = Sound.bus.gain, t = Sound.ctx.currentTime;
+    if (document.hidden) g.setTargetAtTime(0.0001, t, .4);
+    else if (Sound.mode && Sound.mode !== "off") g.setTargetAtTime(0.5, t, 1.2);
+    if (document.hidden && "speechSynthesis" in window) speechSynthesis.cancel();
   } catch (e) {}
 });
-
 document.addEventListener("gesturestart", e => e.preventDefault());
 document.addEventListener("dblclick", e => e.preventDefault());
 
 /* ==========================================================================
    启动
    ========================================================================== */
-buildBoard();
-updateHud();
-renderGarden();
-renderDex();
+function refreshDay(){ $("dayBadge").textContent = "第 " + S.day + " 天"; }
+refreshDay();
+updateSoundBtn();
+renderRes();
+renderMap();
+renderCamp();
+renderDiary();
 renderSettings();
-setTimeout(() => layoutAll(true), 60);
 
-// 首次进入给一句招呼
-setTimeout(() => toast(CONFIG.name + "，" + CONFIG.hello, 2600), 700);
+setTimeout(() => toast(CONFIG.name + "，你漂到「" + CONFIG.islandName + "」上了 🌴", 3000), 700);
 
-window.__GAME__ = { B: B, S: function(){ return S; }, WORDS: WORDS, onTap: onTap,
-                    DECOS: DECOS, comboGet: function(){ return combo; },
-                    showScreen: showScreen, config: CONFIG };
+/* 给无头测试留的钩子 */
+window.__GAME__ = {
+  B: ZONES, BUILDS: BUILDS, CRAFTS: CRAFTS, RES: RES, WORDS: WORDS,
+  S: function(){ return S; },
+  onGather: onGather, doBuild: doBuild, doSleep: doSleep, onFarmTap: onFarmTap,
+  showScreen: showScreen, enterZone: enterZone, curZone: function(){ return curZone; },
+  gatherKey: function(btn){ return btn ? btn.dataset.key : null; },
+  affordable: affordable, config: CONFIG, cool: cool
+};
 </script>
 </body>
 </html>
